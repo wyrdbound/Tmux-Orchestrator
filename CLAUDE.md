@@ -468,15 +468,15 @@ CURRENT_WINDOW=$(tmux display-message -p "#{session_name}:#{window_index}")
 echo "Current window: $CURRENT_WINDOW"
 
 # 2. Test the scheduling script with your current window
-./schedule_with_note.sh 1 "Test schedule for $CURRENT_WINDOW" "$CURRENT_WINDOW"
+./schedule-with-note.sh 1 "Test schedule for $CURRENT_WINDOW" "$CURRENT_WINDOW"
 
 # 3. If scheduling fails, you MUST fix the script before proceeding
 ```
 
 ### Schedule Script Requirements
 
-The `schedule_with_note.sh` script MUST:
-- Accept a third parameter for target window: `./schedule_with_note.sh <minutes> "<note>" <target_window>`
+The `schedule-with-note.sh` script MUST:
+- Accept a third parameter for target window: `./schedule-with-note.sh <minutes> "<note>" <target_window>`
 - Default to `tmux-orc:0` if no target specified
 - Always verify the target window exists before scheduling
 
@@ -491,10 +491,10 @@ The `schedule_with_note.sh` script MUST:
 ```bash
 # Always use current window for self-scheduling
 CURRENT_WINDOW=$(tmux display-message -p "#{session_name}:#{window_index}")
-./schedule_with_note.sh 15 "Regular PM oversight check" "$CURRENT_WINDOW"
+./schedule-with-note.sh 15 "Regular PM oversight check" "$CURRENT_WINDOW"
 
 # For scheduling other agents, specify their windows explicitly
-./schedule_with_note.sh 30 "Developer progress check" "ai-chat:2"
+./schedule-with-note.sh 30 "Developer progress check" "ai-chat:2"
 ```
 
 ## Anti-Patterns to Avoid

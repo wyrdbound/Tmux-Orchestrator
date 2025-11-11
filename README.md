@@ -86,7 +86,7 @@ claude
 in window 1 to implement it. Schedule check-ins every 30 minutes."
 
 # 5. Schedule orchestrator check-in
-./schedule_with_note.sh 30 "Check PM progress on auth system"
+./schedule-with-note.sh 30 "Check PM progress on auth system"
 ```
 
 ### Option 2: Full Orchestrator Setup
@@ -108,7 +108,7 @@ Schedule yourself to check in every hour."
 ### 🔄 Self-Scheduling Agents
 Agents can schedule their own check-ins using:
 ```bash
-./schedule_with_note.sh 30 "Continue dashboard implementation"
+./schedule-with-note.sh 30 "Continue dashboard implementation"
 ```
 
 ### 👥 Multi-Agent Coordination
@@ -212,9 +212,9 @@ The script handles all timing complexities automatically, making agent communica
 ### Scheduling Check-ins
 ```bash
 # Schedule with specific, actionable notes
-./schedule_with_note.sh 30 "Review auth implementation, assign next task"
-./schedule_with_note.sh 60 "Check test coverage, merge if passing"
-./schedule_with_note.sh 120 "Full system check, rotate tasks if needed"
+./schedule-with-note.sh 30 "Review auth implementation, assign next task"
+./schedule-with-note.sh 60 "Check test coverage, merge if passing"
+./schedule-with-note.sh 120 "Full system check, rotate tasks if needed"
 ```
 
 **Important**: The orchestrator needs to know which tmux window it's running in to schedule its own check-ins correctly. If scheduling isn't working, verify the orchestrator knows its current window with:
@@ -247,7 +247,7 @@ The orchestrator can share insights between projects:
 ## 📚 Core Files
 
 - `send-claude-message.sh` - Simplified agent communication script
-- `schedule_with_note.sh` - Self-scheduling functionality
+- `schedule-with-note.sh` - Self-scheduling functionality
 - `tmux_utils.py` - Tmux interaction utilities
 - `CLAUDE.md` - Agent behavior instructions
 - `LEARNINGS.md` - Accumulated knowledge base

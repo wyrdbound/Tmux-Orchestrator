@@ -1,6 +1,6 @@
 #!/bin/bash
 # Dynamic scheduler with note for next check
-# Usage: ./schedule_with_note.sh <minutes> "<note>" [target_window]
+# Usage: ./schedule-with-note.sh <minutes> "<note>" [target_window]
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -28,7 +28,7 @@
 
 ### Reminder System
 - **Discovery**: User reminded me to set check-in reminders before ending conversations
-- **Implementation**: Use schedule_with_note.sh with specific action items
+- **Implementation**: Use schedule-with-note.sh with specific action items
 - **Best Practice**: Always schedule follow-up with concrete next steps, not vague "check progress"
 
 ## 2025-06-17 - Agent System Design
