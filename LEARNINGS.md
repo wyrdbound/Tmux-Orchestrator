@@ -94,3 +94,36 @@
 - **Use Case**: Activated plan mode for complex password reset implementation
 - **Best Practice**: Always verify activation before sending planning request
 - **Key Learning**: Plan mode forces thoughtful approach before coding begins
+
+## 2025-11-10 - Testing and Script Improvements
+
+### Test-Driven Bash Development
+- **Discovery**: Testing bash scripts requires special approaches
+- **Solution**: Created simple test suites without external dependencies
+- **Key Patterns**: 
+  - Use `--test-mode` flags to enable testing without side effects
+  - Test file creation separately from execution
+  - Use very short sleep durations for scheduling tests (0.033 minutes = ~2 seconds)
+  - Clean up all tmux sessions with trap EXIT
+  - Use unique session names with $$ to avoid conflicts
+
+### Tmux Message Sending Issues
+- **Issue**: Complex commands with exclamation marks and pipes were being incorrectly parsed
+- **Root Cause**: Shell escaping issues in nohup bash -c commands
+- **Solution**: Simplified the scheduled command to just `cat "$NOTE_FILE"`
+- **Learning**: Keep scheduled commands simple; complex orchestration can happen elsewhere
+- **Impact**: More reliable scheduling with fewer edge cases
+
+### Test Organization
+- **Pattern**: Created `tests/` directory for all test scripts
+- **Naming**: Use hyphens instead of underscores (`test-script-name.sh`)
+- **Structure**: Each test suite has setup, teardown, pass/fail helpers
+- **Output**: Color-coded results (green ✓, red ✗) for quick scanning
+- **Coverage**: Test both happy path and edge cases (default args, custom args, multiple simultaneous schedules)
+
+### Script Interface Design
+- **Best Practice**: Add `--test-mode` flags for testability
+- **Benefit**: Allows verification without creating background processes
+- **Implementation**: Filter flags from args array before parsing positionals
+- **Documentation**: Update all docs when adding new flags or changing behavior
+```

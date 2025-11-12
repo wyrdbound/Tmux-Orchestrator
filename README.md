@@ -212,9 +212,12 @@ The script handles all timing complexities automatically, making agent communica
 ### Scheduling Check-ins
 ```bash
 # Schedule with specific, actionable notes
-./schedule-with-note.sh 30 "Review auth implementation, assign next task"
-./schedule-with-note.sh 60 "Check test coverage, merge if passing"
-./schedule-with-note.sh 120 "Full system check, rotate tasks if needed"
+./schedule-with-note.sh 30 "Review auth implementation, assign next task" "session:0"
+./schedule-with-note.sh 60 "Check test coverage, merge if passing" "session:1"
+./schedule-with-note.sh 120 "Full system check, rotate tasks if needed" "session:2"
+
+# Test scheduling (useful for debugging)
+./schedule-with-note.sh 5 "Test note" "session:0" --test-mode
 ```
 
 **Important**: The orchestrator needs to know which tmux window it's running in to schedule its own check-ins correctly. If scheduling isn't working, verify the orchestrator knows its current window with:
@@ -247,10 +250,13 @@ The orchestrator can share insights between projects:
 ## 📚 Core Files
 
 - `send-claude-message.sh` - Simplified agent communication script
-- `schedule-with-note.sh` - Self-scheduling functionality
+- `schedule-with-note.sh` - Self-scheduling functionality with `--test-mode` for safe testing
 - `tmux_utils.py` - Tmux interaction utilities
 - `CLAUDE.md` - Agent behavior instructions
 - `LEARNINGS.md` - Accumulated knowledge base
+- `tests/` - Test suites for bash scripts
+  - `test-send-claude-message.sh` - Tests for message sending script
+  - `test-schedule-with-note.sh` - Tests for scheduling script
 
 ## 🤝 Contributing & Optimization
 

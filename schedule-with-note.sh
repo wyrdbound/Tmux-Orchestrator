@@ -1,14 +1,26 @@
 #!/bin/bash
 # Dynamic scheduler with note for next check
-# Usage: ./schedule-with-note.sh <minutes> "<note>" [target_window]
+# Usage: ./schedule-with-note.sh <minutes> "<note>" [target_window] [--test-mode]
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NOTE_FILE="$SCRIPT_DIR/next_check_note.txt"
 
-MINUTES=${1:-3}
-NOTE=${2:-"Standard check-in"}
-TARGET=${3:-"tmux-orc:0"}
+# Check for test mode flag first
+TEST_MODE=""
+ARGS=()
+for arg in "$@"; do
+    if [ "$arg" = "--test-mode" ]; then
+        TEST_MODE="--test-mode"
+    else
+        ARGS+=("$arg")
+    fi
+done
+
+# Now parse positional arguments (without --test-mode)
+MINUTES=${ARGS[0]:-3}
+NOTE=${ARGS[1]:-"Standard check-in"}
+TARGET=${ARGS[2]:-"tmux-orc:0"}
 
 # Create a note file for the next check
 echo "=== Next Check Note ($(date)) ===" > "$NOTE_FILE"
@@ -25,7 +37,19 @@ RUN_TIME=$(date -v +${MINUTES}M +"%H:%M:%S" 2>/dev/null || date -d "+${MINUTES} 
 # Use nohup to completely detach the sleep process
 # Use bc for floating point calculation
 SECONDS=$(echo "$MINUTES * 60" | bc)
-nohup bash -c "sleep $SECONDS && tmux send-keys -t $TARGET 'Time for orchestrator check! cat \"$NOTE_FILE\" && python3 claude_control.py status detailed' && sleep 1 && tmux send-keys -t $TARGET Enter" > /dev/null 2>&1 &
+
+if [ "$TEST_MODE" = "--test-mode" ]; then
+    # In test mode, just verify the command would work without actually scheduling
+    echo "TEST MODE: Would schedule to run at $RUN_TIME (in $MINUTES minutes from $CURRENT_TIME)"
+    echo "TEST MODE: Target window: $TARGET"
+    echo "TEST MODE: Note file created at: $NOTE_FILE"
+    exit 0
+fi
+
+# Create the command to run - escape properly for nohup
+COMMAND="tmux send-keys -t $TARGET 'cat \"$NOTE_FILE\"' Enter"
+
+nohup bash -c "sleep $SECONDS && $COMMAND" > /dev/null 2>&1 &
 
 # Get the PID of the background process
 SCHEDULE_PID=$!

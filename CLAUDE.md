@@ -495,6 +495,9 @@ CURRENT_WINDOW=$(tmux display-message -p "#{session_name}:#{window_index}")
 
 # For scheduling other agents, specify their windows explicitly
 ./schedule-with-note.sh 30 "Developer progress check" "ai-chat:2"
+
+# Test scheduling without actually creating background process
+./schedule-with-note.sh 5 "Test note" "session:0" --test-mode
 ```
 
 ## Anti-Patterns to Avoid
