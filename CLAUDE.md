@@ -1,12 +1,15 @@
 # Claude.md - Tmux Orchestrator Project Knowledge Base
 
 ## Project Overview
+
 The Tmux Orchestrator is an AI-powered session management system where Claude acts as the orchestrator for multiple Claude agents across tmux sessions, managing codebases and keeping development moving forward 24/7.
 
 ## Agent System Architecture
 
 ### Orchestrator Role
+
 As the Orchestrator, you maintain high-level oversight without getting bogged down in implementation details:
+
 - Deploy and coordinate agent teams
 - Monitor system health
 - Resolve cross-project dependencies
@@ -14,6 +17,7 @@ As the Orchestrator, you maintain high-level oversight without getting bogged do
 - Ensure quality standards are maintained
 
 ### Agent Hierarchy
+
 ```
                     Orchestrator (You)
                     /              \
@@ -23,6 +27,7 @@ As the Orchestrator, you maintain high-level oversight without getting bogged do
 ```
 
 ### Agent Types
+
 1. **Project Manager**: Quality-focused team coordination
 2. **Developer**: Implementation and technical decisions
 3. **QA Engineer**: Testing and verification
@@ -38,6 +43,7 @@ As the Orchestrator, you maintain high-level oversight without getting bogged do
 **CRITICAL**: Every agent MUST follow these git practices to prevent work loss:
 
 1. **Auto-Commit Every 30 Minutes**
+
    ```bash
    # Set a timer/reminder to commit regularly
    git add -A
@@ -45,15 +51,17 @@ As the Orchestrator, you maintain high-level oversight without getting bogged do
    ```
 
 2. **Commit Before Task Switches**
+
    - ALWAYS commit current work before starting a new task
    - Never leave uncommitted changes when switching context
    - Tag working versions before major changes
 
 3. **Feature Branch Workflow**
+
    ```bash
    # Before starting any new feature/task
    git checkout -b feature/[descriptive-name]
-   
+
    # After completing feature
    git add -A
    git commit -m "Complete: [feature description]"
@@ -61,6 +69,7 @@ As the Orchestrator, you maintain high-level oversight without getting bogged do
    ```
 
 4. **Meaningful Commit Messages**
+
    - Bad: "fixes", "updates", "changes"
    - Good: "Add user authentication endpoints with JWT tokens"
    - Good: "Fix null pointer in payment processing module"
@@ -74,6 +83,7 @@ As the Orchestrator, you maintain high-level oversight without getting bogged do
 ### Git Emergency Recovery
 
 If something goes wrong:
+
 ```bash
 # Check recent commits
 git log --oneline -10
@@ -90,6 +100,7 @@ git stash pop  # Restore stashed changes if needed
 ### Project Manager Git Responsibilities
 
 Project Managers must enforce git discipline:
+
 - Remind engineers to commit every 30 minutes
 - Verify feature branches are created for new work
 - Ensure meaningful commit messages
@@ -105,13 +116,17 @@ Project Managers must enforce git discipline:
 ## Startup Behavior - Tmux Window Naming
 
 ### Auto-Rename Feature
+
 When Claude starts in the orchestrator, it should:
+
 1. **Ask the user**: "Would you like me to rename all tmux windows with descriptive names for better organization?"
 2. **If yes**: Analyze each window's content and rename them with meaningful names
 3. **If no**: Continue with existing names
 
 ### Window Naming Convention
+
 Windows should be named based on their actual function:
+
 - **Claude Agents**: `Claude-Frontend`, `Claude-Backend`, `Claude-Convex`
 - **Dev Servers**: `NextJS-Dev`, `Frontend-Dev`, `Uvicorn-API`
 - **Shells/Utilities**: `Backend-Shell`, `Frontend-Shell`
@@ -119,6 +134,7 @@ Windows should be named based on their actual function:
 - **Project Specific**: `Notion-Agent`, etc.
 
 ### How to Rename Windows
+
 ```bash
 # Rename a specific window
 tmux rename-window -t session:window-index "New-Name"
@@ -129,6 +145,7 @@ tmux rename-window -t glacier-backend:3 "Uvicorn-API"
 ```
 
 ### Benefits
+
 - **Quick Navigation**: Easy to identify windows at a glance
 - **Better Organization**: Know exactly what's running where
 - **Reduced Confusion**: No more generic "node" or "zsh" names
@@ -141,6 +158,7 @@ tmux rename-window -t glacier-backend:3 "Uvicorn-API"
 Follow this systematic sequence to start any project:
 
 #### 1. Find the Project
+
 ```bash
 # List all directories in ~/Coding to find projects
 ls -la ~/Coding/ | grep "^d" | awk '{print $NF}' | grep -v "^\."
@@ -150,6 +168,7 @@ ls -la ~/Coding/ | grep -i "task"  # for "task templates"
 ```
 
 #### 2. Create Tmux Session
+
 ```bash
 # Create session with project name (use hyphens for spaces)
 PROJECT_NAME="task-templates"  # or whatever the folder is called
@@ -158,6 +177,7 @@ tmux new-session -d -s $PROJECT_NAME -c "$PROJECT_PATH"
 ```
 
 #### 3. Set Up Standard Windows
+
 ```bash
 # Window 0: Claude Agent
 tmux rename-window -t $PROJECT_NAME:0 "Claude-Agent"
@@ -170,6 +190,7 @@ tmux new-window -t $PROJECT_NAME -n "Dev-Server" -c "$PROJECT_PATH"
 ```
 
 #### 4. Brief the Claude Agent
+
 ```bash
 # Send briefing message to Claude agent
 tmux send-keys -t $PROJECT_NAME:0 "claude" Enter
@@ -178,7 +199,7 @@ sleep 5  # Wait for Claude to start
 # Send the briefing
 tmux send-keys -t $PROJECT_NAME:0 "You are responsible for the $PROJECT_NAME codebase. Your duties include:
 1. Getting the application running
-2. Checking GitHub issues for priorities  
+2. Checking GitHub issues for priorities
 3. Working on highest priority tasks
 4. Keeping the orchestrator informed of progress
 
@@ -193,12 +214,14 @@ tmux send-keys -t $PROJECT_NAME:0 Enter
 ```
 
 #### 5. Project Type Detection (Agent Should Do This)
+
 The agent should check for:
+
 ```bash
 # Node.js project
 test -f package.json && cat package.json | grep scripts
 
-# Python project  
+# Python project
 test -f requirements.txt || test -f pyproject.toml || test -f setup.py
 
 # Ruby project
@@ -209,7 +232,9 @@ test -f go.mod
 ```
 
 #### 6. Start Development Server (Agent Should Do This)
+
 Based on project type, the agent should start the appropriate server in window 2:
+
 ```bash
 # For Next.js/Node projects
 tmux send-keys -t $PROJECT_NAME:2 "npm install && npm run dev" Enter
@@ -222,6 +247,7 @@ tmux send-keys -t $PROJECT_NAME:2 "source venv/bin/activate && python manage.py 
 ```
 
 #### 7. Check GitHub Issues (Agent Should Do This)
+
 ```bash
 # Check if it's a git repo with remote
 git remote -v
@@ -234,12 +260,14 @@ ls -la | grep -E "(TODO|ROADMAP|TASKS)"
 ```
 
 #### 8. Monitor and Report Back
+
 The orchestrator should:
+
 ```bash
 # Check agent status periodically
 tmux capture-pane -t $PROJECT_NAME:0 -p | tail -30
 
-# Check if dev server started successfully  
+# Check if dev server started successfully
 tmux capture-pane -t $PROJECT_NAME:2 -p | tail -20
 
 # Monitor for errors
@@ -247,6 +275,7 @@ tmux capture-pane -t $PROJECT_NAME:2 -p | grep -i error
 ```
 
 ### Example: Starting "Task Templates" Project
+
 ```bash
 # 1. Find project
 ls -la ~/Coding/ | grep -i task
@@ -266,6 +295,7 @@ tmux send-keys -t task-templates:0 "claude" Enter
 ```
 
 ### Important Notes
+
 - Always verify project exists before creating session
 - Use project folder name for session name (with hyphens for spaces)
 - Let the agent figure out project-specific details
@@ -276,6 +306,7 @@ tmux send-keys -t task-templates:0 "claude" Enter
 ### When User Says "Create a project manager for [session]"
 
 #### 1. Analyze the Session
+
 ```bash
 # List windows in the session
 tmux list-windows -t [session] -F "#{window_index}: #{window_name}"
@@ -285,6 +316,7 @@ tmux capture-pane -t [session]:0 -p | tail -50
 ```
 
 #### 2. Create PM Window
+
 ```bash
 # Get project path from existing window
 PROJECT_PATH=$(tmux display-message -t [session]:0 -p '#{pane_current_path}')
@@ -294,6 +326,7 @@ tmux new-window -t [session] -n "Project-Manager" -c "$PROJECT_PATH"
 ```
 
 #### 3. Start and Brief the PM
+
 ```bash
 # Start Claude
 tmux send-keys -t [session]:[PM-window] "claude" Enter
@@ -321,7 +354,9 @@ tmux send-keys -t [session]:[PM-window] Enter
 ```
 
 #### 4. PM Introduction Protocol
+
 The PM should:
+
 ```bash
 # Check developer window
 tmux capture-pane -t [session]:0 -p | tail -30
@@ -335,13 +370,16 @@ tmux send-keys -t [session]:0 Enter
 ## Communication Protocols
 
 ### Hub-and-Spoke Model
+
 To prevent communication overload (n² complexity), use structured patterns:
+
 - Developers report to PM only
 - PM aggregates and reports to Orchestrator
 - Cross-functional communication goes through PM
 - Emergency escalation directly to Orchestrator
 
 ### Daily Standup (Async)
+
 ```bash
 # PM asks each team member
 tmux send-keys -t [session]:[dev-window] "STATUS UPDATE: Please provide: 1) Completed tasks, 2) Current work, 3) Any blockers"
@@ -351,9 +389,10 @@ tmux send-keys -t [session]:[dev-window] "STATUS UPDATE: Please provide: 1) Comp
 ### Message Templates
 
 #### Status Update
+
 ```
 STATUS [AGENT_NAME] [TIMESTAMP]
-Completed: 
+Completed:
 - [Specific task 1]
 - [Specific task 2]
 Current: [What working on now]
@@ -362,6 +401,7 @@ ETA: [Expected completion]
 ```
 
 #### Task Assignment
+
 ```
 TASK [ID]: [Clear title]
 Assigned to: [AGENT]
@@ -377,6 +417,7 @@ Priority: HIGH/MED/LOW
 ### When User Says "Work on [new project]"
 
 #### 1. Project Analysis
+
 ```bash
 # Find project
 ls -la ~/Coding/ | grep -i "[project-name]"
@@ -394,18 +435,22 @@ test -f requirements.txt && echo "Python project"
 **Large Project**: Lead + 2 Devs + PM + QA + DevOps
 
 #### 3. Deploy Team
+
 Create session and deploy all agents with specific briefings for their roles.
 
 ## Agent Lifecycle Management
 
 ### Creating Temporary Agents
+
 For specific tasks (code review, bug fix):
+
 ```bash
 # Create with clear temporary designation
 tmux new-window -t [session] -n "TEMP-CodeReview"
 ```
 
 ### Ending Agents Properly
+
 ```bash
 # 1. Capture complete conversation
 tmux capture-pane -t [session]:[window] -S - -E - > \
@@ -422,6 +467,7 @@ tmux kill-window -t [session]:[window]
 ```
 
 ### Agent Logging Structure
+
 ```
 ~/Coding/Tmux orchestrator/registry/
 ├── logs/            # Agent conversation logs
@@ -432,6 +478,7 @@ tmux kill-window -t [session]:[window]
 ## Quality Assurance Protocols
 
 ### PM Verification Checklist
+
 - [ ] All code has tests
 - [ ] Error handling is comprehensive
 - [ ] Performance is acceptable
@@ -440,7 +487,9 @@ tmux kill-window -t [session]:[window]
 - [ ] No technical debt introduced
 
 ### Continuous Verification
+
 PMs should implement:
+
 1. Code review before any merge
 2. Test coverage monitoring
 3. Performance benchmarking
@@ -450,12 +499,14 @@ PMs should implement:
 ### Running Tests
 
 #### Run All Tests
+
 ```bash
 # Run the complete test suite
 ./tests/test-all.sh
 ```
 
 #### Run Individual Tests
+
 ```bash
 # Run specific test files
 ./tests/test-schedule-with-note.sh
@@ -463,6 +514,7 @@ PMs should implement:
 ```
 
 #### Test Requirements
+
 - All bash tests must be executable and named with pattern `test-*.sh`
 - Tests should be placed in the `tests/` directory
 - Each test should exit with status 0 for success, non-zero for failure
@@ -497,6 +549,7 @@ echo "Current window: $CURRENT_WINDOW"
 ### Schedule Script Requirements
 
 The `schedule-with-note.sh` script MUST:
+
 - Accept a third parameter for target window: `./schedule-with-note.sh <minutes> "<note>" <target_window>`
 - Default to `tmux-orc:0` if no target specified
 - Always verify the target window exists before scheduling
@@ -535,11 +588,13 @@ CURRENT_WINDOW=$(tmux display-message -p "#{session_name}:#{window_index}")
 ### Tmux Window Management Mistakes and Solutions
 
 #### Mistake 1: Wrong Directory When Creating Windows
+
 **What Went Wrong**: Created server window without specifying directory, causing uvicorn to run in wrong location (Tmux orchestrator instead of Glacier-Analytics)
 
 **Root Cause**: New tmux windows inherit the working directory from where tmux was originally started, NOT from the current session's active window
 
-**Solution**: 
+**Solution**:
+
 ```bash
 # Always use -c flag when creating windows
 tmux new-window -t session -n "window-name" -c "/correct/path"
@@ -550,11 +605,13 @@ tmux send-keys -t session:window-name "cd /correct/path" Enter
 ```
 
 #### Mistake 2: Not Reading Actual Command Output
+
 **What Went Wrong**: Assumed commands like `uvicorn app.main:app` succeeded without checking output
 
 **Root Cause**: Not using `tmux capture-pane` to verify command results
 
 **Solution**:
+
 ```bash
 # Always check output after running commands
 tmux send-keys -t session:window "command" Enter
@@ -563,11 +620,13 @@ tmux capture-pane -t session:window -p | tail -50
 ```
 
 #### Mistake 3: Typing Commands in Already Active Sessions
+
 **What Went Wrong**: Typed "claude" in a window that already had Claude running
 
 **Root Cause**: Not checking window contents before sending commands
 
 **Solution**:
+
 ```bash
 # Check window contents first
 tmux capture-pane -t session:window -S -100 -p
@@ -575,11 +634,13 @@ tmux capture-pane -t session:window -S -100 -p
 ```
 
 #### Mistake 4: Incorrect Message Sending to Claude Agents
+
 **What Went Wrong**: Initially sent Enter key with the message text instead of as separate command
 
 **Root Cause**: Using `tmux send-keys -t session:window "message" Enter` combines them
 
 **Solution**:
+
 ```bash
 # Send message and Enter separately
 tmux send-keys -t session:window "Your message here"
@@ -589,13 +650,16 @@ tmux send-keys -t session:window Enter
 ## Best Practices for Tmux Orchestration
 
 ### Pre-Command Checks
+
 1. **Verify Working Directory**
+
    ```bash
    tmux send-keys -t session:window "pwd" Enter
    tmux capture-pane -t session:window -p | tail -5
    ```
 
 2. **Check Command Availability**
+
    ```bash
    tmux send-keys -t session:window "which command_name" Enter
    tmux capture-pane -t session:window -p | tail -5
@@ -607,6 +671,7 @@ tmux send-keys -t session:window Enter
    ```
 
 ### Window Creation Workflow
+
 ```bash
 # 1. Create window with correct directory
 tmux new-window -t session -n "descriptive-name" -c "/path/to/project"
@@ -628,7 +693,9 @@ tmux capture-pane -t session:descriptive-name -p | tail -20
 ```
 
 ### Debugging Failed Commands
+
 When a command fails:
+
 1. Capture full window output: `tmux capture-pane -t session:window -S -200 -p`
 2. Check for common issues:
    - Wrong directory
@@ -644,6 +711,7 @@ When a command fails:
 **DO NOT manually send messages with tmux send-keys anymore!** We have a dedicated script that handles all the timing and complexity for you.
 
 #### Using send-claude-message.sh
+
 ```bash
 # Basic usage - ALWAYS use this instead of manual tmux commands
 /Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh <target> "message"
@@ -663,6 +731,7 @@ When a command fails:
 ```
 
 #### Why Use the Script?
+
 1. **Automatic timing**: Handles the critical 0.5s delay between message and Enter
 2. **Simpler commands**: One line instead of three
 3. **No timing mistakes**: Prevents the common error of Enter being sent too quickly
@@ -670,15 +739,17 @@ When a command fails:
 5. **Consistent messaging**: All agents receive messages the same way
 
 #### Script Location and Usage
+
 - **Location**: `/Users/jasonedward/Coding/Tmux orchestrator/send-claude-message.sh`
 - **Permissions**: Already executable, ready to use
-- **Arguments**: 
+- **Arguments**:
   - First: target (session:window or session:window.pane)
   - Second: message (can contain spaces, will be properly handled)
 
 #### Common Messaging Patterns with the Script
 
 ##### 1. Starting Claude and Initial Briefing
+
 ```bash
 # Start Claude first
 tmux send-keys -t project:0 "claude" Enter
@@ -689,6 +760,7 @@ sleep 5
 ```
 
 ##### 2. Cross-Agent Coordination
+
 ```bash
 # Ask frontend agent about API usage
 /Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh frontend:0 "Which API endpoints are you currently using from the backend?"
@@ -698,6 +770,7 @@ sleep 5
 ```
 
 ##### 3. Status Checks
+
 ```bash
 # Quick status request
 /Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh session:0 "Quick status update please"
@@ -707,6 +780,7 @@ sleep 5
 ```
 
 ##### 4. Providing Assistance
+
 ```bash
 # Share error information
 /Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh session:0 "I see in your server window that port 3000 is already in use. Try port 3001 instead."
@@ -716,6 +790,7 @@ sleep 5
 ```
 
 #### OLD METHOD (DO NOT USE)
+
 ```bash
 # ❌ DON'T DO THIS ANYMORE:
 tmux send-keys -t session:window "message"
@@ -727,7 +802,9 @@ tmux send-keys -t session:window Enter
 ```
 
 #### Checking for Responses
+
 After sending a message, check for the response:
+
 ```bash
 # Send message
 /Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh session:0 "What's your status?"

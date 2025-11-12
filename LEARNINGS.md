@@ -3,6 +3,7 @@
 ## 2025-06-18 - Project Management & Agent Oversight
 
 ### Discovery: Importance of Web Research
+
 - **Issue**: Developer spent 2+ hours trying to solve JWT multiline environment variable issue in Convex
 - **Mistake**: As PM, I didn't suggest web research until prompted by the user
 - **Learning**: Should ALWAYS suggest web research after 10 minutes of failed attempts
@@ -10,23 +11,27 @@
 - **Impact**: Web search immediately revealed the solution (replace newlines with spaces)
 
 ### Insight: Reading Error Messages Carefully
+
 - **Issue**: Developer spent time on base64 decoding when the real error was "Missing environment variable JWT_PRIVATE_KEY"
 - **Learning**: Always verify the actual error before implementing complex solutions
 - **Pattern**: Developers often over-engineer solutions without checking basic assumptions
 - **PM Action**: Ask "What's the EXACT error message?" before approving solution approaches
 
 ### Project Manager Best Practices
+
 - **Be Firm but Constructive**: When developer was coding without documenting, had to insist on LEARNINGS.md creation
 - **Status Reports**: Direct questions get better results than open-ended "how's it going?"
 - **Escalation Timing**: If 3 approaches fail, immediately suggest different strategy
 - **Documentation First**: Enforce documentation BEFORE continuing to code when stuck
 
 ### Communication Patterns That Work
+
 - **Effective**: "STOP. Give me status: 1) X fixed? YES/NO 2) Current error?"
 - **Less Effective**: "How's the authentication coming along?"
 - **Key**: Specific, numbered questions force clear responses
 
 ### Reminder System
+
 - **Discovery**: User reminded me to set check-in reminders before ending conversations
 - **Implementation**: Use schedule-with-note.sh with specific action items
 - **Best Practice**: Always schedule follow-up with concrete next steps, not vague "check progress"
@@ -34,16 +39,19 @@
 ## 2025-06-17 - Agent System Design
 
 ### Multi-Agent Coordination
+
 - **Challenge**: Communication complexity grows exponentially (n²) with more agents
 - **Solution**: Hub-and-spoke model with PM as central coordinator
 - **Key Insight**: Structured communication templates reduce ambiguity and overhead
 
 ### Agent Lifecycle Management
+
 - **Learning**: Need clear distinction between permanent and temporary agents
 - **Solution**: Implement proper logging before terminating agents
 - **Directory Structure**: agent_logs/permanent/ and agent_logs/temporary/
 
 ### Quality Assurance
+
 - **Principle**: PMs must be "meticulous about testing and verification"
 - **Implementation**: Verification checklists, no shortcuts, track technical debt
 - **Key**: Trust but verify - always check actual implementation
@@ -66,24 +74,28 @@
 ## 2025-06-18 - Later Session - Authentication Success Story
 
 ### Effective PM Intervention
+
 - **Situation**: Developer struggling with JWT authentication for 3+ hours
 - **Key Action**: Sent direct encouragement when I saw errors were resolved
 - **Result**: Motivated developer to document learnings properly
 - **Lesson**: Timely positive feedback is as important as corrective guidance
 
-### Cross-Window Intelligence 
+### Cross-Window Intelligence
+
 - **Discovery**: Can monitor server logs while developer works
 - **Application**: Saw JWT_PRIVATE_KEY error was resolved before developer noticed
 - **Value**: Proactive encouragement based on real-time monitoring
 - **Best Practice**: Always check related windows (servers, logs) for context
 
 ### Documentation Enforcement
+
 - **Challenge**: Developers often skip documentation when solution works
 - **Solution**: Send specific reminders about what to document
 - **Example**: Listed exact items to include in LEARNINGS.md
 - **Impact**: Ensures institutional knowledge is captured
 
 ### Claude Plan Mode Discovery
+
 - **Feature**: Claude has a plan mode activated by Shift+Tab+Tab
 - **Key Sequence**: Hold Shift, press Tab, press Tab again, release Shift
 - **Critical Step**: MUST verify "⏸ plan mode on" appears - may need multiple attempts
@@ -98,9 +110,10 @@
 ## 2025-11-10 - Testing and Script Improvements
 
 ### Test-Driven Bash Development
+
 - **Discovery**: Testing bash scripts requires special approaches
 - **Solution**: Created simple test suites without external dependencies
-- **Key Patterns**: 
+- **Key Patterns**:
   - Use `--test-mode` flags to enable testing without side effects
   - Test file creation separately from execution
   - Use very short sleep durations for scheduling tests (0.033 minutes = ~2 seconds)
@@ -108,6 +121,7 @@
   - Use unique session names with $$ to avoid conflicts
 
 ### Tmux Message Sending Issues
+
 - **Issue**: Complex commands with exclamation marks and pipes were being incorrectly parsed
 - **Root Cause**: Shell escaping issues in nohup bash -c commands
 - **Solution**: Simplified the scheduled command to just `cat "$NOTE_FILE"`
@@ -115,6 +129,7 @@
 - **Impact**: More reliable scheduling with fewer edge cases
 
 ### Test Organization
+
 - **Pattern**: Created `tests/` directory for all test scripts
 - **Naming**: Use hyphens instead of underscores (`test-script-name.sh`)
 - **Structure**: Each test suite has setup, teardown, pass/fail helpers
@@ -122,8 +137,12 @@
 - **Coverage**: Test both happy path and edge cases (default args, custom args, multiple simultaneous schedules)
 
 ### Script Interface Design
+
 - **Best Practice**: Add `--test-mode` flags for testability
 - **Benefit**: Allows verification without creating background processes
 - **Implementation**: Filter flags from args array before parsing positionals
 - **Documentation**: Update all docs when adding new flags or changing behavior
+
+```
+
 ```
