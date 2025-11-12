@@ -212,19 +212,35 @@ Tmux (terminal multiplexer) is the key enabler because:
 
 ### 💬 Simplified Agent Communication
 
-We now use the `send-claude-message.sh` script for all agent communication:
+We provide helper scripts for reliable agent communication and management:
 
 ```bash
-# Send message to any Claude agent
-./send-claude-message.sh session:window "Your message here"
+# Check if Claude is running in a window
+./check-claude-running.sh session:window
+# Returns: exit code 0 if running, 1 if not, 2 for errors
 
-# Examples:
-./send-claude-message.sh frontend:0 "What's your progress on the login form?"
-./send-claude-message.sh backend:1 "The API endpoint /api/users is returning 404"
-./send-claude-message.sh project-manager:0 "Please coordinate with the QA team"
+# Start a new Claude agent with optional briefing
+./start-claude-agent.sh session:window "You are the PM for this project..."
+
+# Send message to a running Claude agent
+./send-claude-message.sh session:window "Your message here"
 ```
 
-The script handles all timing complexities automatically, making agent communication reliable and consistent.
+**Examples:**
+
+```bash
+# Verify Claude is running before sending a message
+./check-claude-running.sh frontend:0 && echo "✓ Ready" || echo "✗ Not running"
+
+# Create a new PM agent
+tmux new-window -t project -n "PM" -c "/path/to/project"
+./start-claude-agent.sh project:1 "You are the Project Manager. Review the codebase and create a developer in window 2."
+
+# Send status request
+./send-claude-message.sh backend:1 "STATUS UPDATE: What's your progress on the API endpoints?"
+```
+
+These scripts handle all timing complexities and verification automatically, making agent communication reliable and consistent.
 
 ### Scheduling Check-ins
 
@@ -253,14 +269,19 @@ Verify all core functionality is working correctly:
 ./tests/test-all.sh
 
 # Run individual test files
-./tests/test-send-claude-message.sh
-./tests/test-schedule-with-note.sh
+./tests/test-check-claude-running.sh  # Claude detection
+./tests/test-send-claude-message.sh   # Message sending
+./tests/test-schedule-with-note.sh    # Scheduling
+./tests/test-start-claude-agent.sh    # Agent startup
+./tests/test-integration.sh           # Full workflow
 ```
 
 The test suite validates:
 
+- Claude detection using process inspection
 - Message sending functionality between tmux windows
 - Scheduling system with note creation
+- Agent startup and verification
 - Error handling and edge cases
 - Multi-session coordination
 
@@ -293,15 +314,32 @@ The orchestrator can share insights between projects:
 
 ## 📚 Core Files
 
-- `send-claude-message.sh` - Simplified agent communication script
-- `schedule-with-note.sh` - Self-scheduling functionality with `--test-mode` for safe testing
+### Helper Scripts
+
+- `check-claude-running.sh` - Verify if Claude is running in a tmux window
+- `start-claude-agent.sh` - Start Claude agent with optional briefing
+- `send-claude-message.sh` - Send messages to running Claude agents
+- `schedule-with-note.sh` - Self-scheduling functionality with `--test-mode`
+
+### Utilities
+
 - `tmux_utils.py` - Tmux interaction utilities
-- `CLAUDE.md` - Agent behavior instructions
-- `LEARNINGS.md` - Accumulated knowledge base
-- `tests/` - Test suites for bash scripts
-  - `test-all.sh` - Run all test suites with summary reporting
-  - `test-send-claude-message.sh` - Tests for message sending script
-  - `test-schedule-with-note.sh` - Tests for scheduling script
+
+### Documentation
+
+- `CLAUDE.md` - Complete agent behavior instructions and workflows
+- `LEARNINGS.md` - Accumulated knowledge base and lessons learned
+- `QUICK_REFERENCE.md` - Quick reference guide for common operations
+
+### Tests
+
+- `tests/test-all.sh` - Run all test suites with summary reporting
+- `tests/test-check-claude-running.sh` - Tests for Claude detection
+- `tests/test-send-claude-message.sh` - Tests for message sending
+- `tests/test-schedule-with-note.sh` - Tests for scheduling
+- `tests/test-start-claude-agent.sh` - Tests for agent startup
+- `tests/test-integration.sh` - Integration tests for full workflow
+- `tests/mock-claude.sh` - Mock Claude for testing
 
 ## 🤝 Contributing & Optimization
 

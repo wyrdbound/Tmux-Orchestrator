@@ -107,6 +107,49 @@
 - **Best Practice**: Always verify activation before sending planning request
 - **Key Learning**: Plan mode forces thoughtful approach before coding begins
 
+## 2025-11-11 - Agent Startup Reliability Issues
+
+### Problem: Messages Not Sending to New Agents
+
+**Issue**: When orchestrator created PM and PM created Developer, messages weren't being properly delivered:
+
+1. Enter key wasn't being pressed after sending briefing
+2. Commands like `echo` were sent instead of actually starting Claude
+
+**Root Causes**:
+
+1. **Timing Issues**: `sleep 5` is not always enough for Claude to fully initialize
+2. **Script Misuse**: Using `send-claude-message.sh` before Claude was actually running
+3. **No Verification**: Not checking if Claude started before sending messages
+4. **Manual Commands**: Using `tmux send-keys` with manual timing instead of helper scripts
+
+**Solutions Implemented**:
+
+1. Created dedicated `start-claude-agent.sh` script that:
+   - Starts Claude
+   - Waits with verification (7 seconds)
+   - Optionally sends initial message
+   - Reports success/failure clearly
+2. Updated `send-claude-message.sh` to:
+   - Check if Claude is running before sending messages
+   - Exit with helpful error if Claude not detected
+   - Suggest using `start-claude-agent.sh` to start Claude first
+3. Updated CLAUDE.md with clear workflows and anti-patterns
+4. Added Orchestrator Agent Creation Checklist for verification
+
+**Best Practice Going Forward**:
+
+- Always use `start-claude-agent.sh` when creating new agents
+- Never manually send `claude` command followed by immediate messaging
+- Verify agent startup before considering task complete
+- Orchestrator should check window contents after agent creation
+- PMs creating developers should also use `start-claude-agent.sh`
+
+**Key Insight**: The separation of concerns is critical:
+
+- `start-claude-agent.sh` = Start Claude and optionally send initial message
+- `send-claude-message.sh` = Send messages to already-running Claude agents
+
 ## 2025-11-10 - Testing and Script Improvements
 
 ### Test-Driven Bash Development

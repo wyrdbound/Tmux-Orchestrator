@@ -7,17 +7,43 @@ This directory contains test suites for the Tmux Orchestrator bash scripts.
 Run all tests:
 
 ```bash
-./tests/test-send-claude-message.sh
-./tests/test-schedule-with-note.sh
+./tests/test-all.sh
 ```
 
-Or run them together:
+Or run individual tests:
 
 ```bash
-./tests/test-send-claude-message.sh && ./tests/test-schedule-with-note.sh
+./tests/test-send-claude-message.sh
+./tests/test-schedule-with-note.sh
+./tests/test-start-claude-agent.sh
+./tests/test-check-claude-running.sh
 ```
 
 ## Test Files
+
+### test-all.sh
+
+Runs all test scripts and provides a summary.
+
+### test-check-claude-running.sh
+
+Tests for the `check-claude-running.sh` script.
+
+**Tests (6 total):**
+
+- ✓ No arguments shows usage and exits with code 2
+- ✓ Non-existent window returns error (exit code 2)
+- ✓ Window without Claude returns exit code 1
+- ✓ Window with Claude returns exit code 0
+- ✓ Can be used in if statement (Claude running)
+- ✓ Can be used in if statement (Claude not running)
+
+**Key Features:**
+
+- Validates exit codes for different scenarios
+- Tests conditional usage in shell scripts
+- Verifies error handling
+- Uses mock-claude.sh for realistic testing
 
 ### test-send-claude-message.sh
 
@@ -64,6 +90,23 @@ Tests for the `schedule-with-note.sh` script.
 - Verifies multiple simultaneous schedules
 - Tests note file creation and delivery
 - Automatic cleanup of processes and sessions
+
+### test-start-claude-agent.sh
+
+Tests for the `start-claude-agent.sh` script.
+
+**Tests (3 total):**
+
+- ✓ Requires window argument
+- ✓ Detects non-existent window
+- ✓ Accepts valid window format
+
+**Key Features:**
+
+- Validates argument handling
+- Tests window existence checking
+- Verifies error messages are helpful
+- Automatic cleanup of test sessions
 
 ## Test Design Principles
 

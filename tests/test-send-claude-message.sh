@@ -70,11 +70,15 @@ test_success_message() {
         return
     fi
     
+    # Start mock claude
+    tmux send-keys -t "$session:0" "$SCRIPT_DIR/../tests/mock-claude.sh" Enter
+    sleep 0.5
+    
     output=$("$SCRIPT" "$session:0" "test message" 2>&1)
     if [ $? -eq 0 ] && [[ "$output" =~ "Message sent to" ]] && [[ "$output" =~ "test message" ]]; then
         pass "success message printed"
     else
-        fail "success message printed"
+        fail "success message printed (output: $output)"
     fi
     
     tmux kill-session -t "$session" 2>/dev/null
@@ -88,6 +92,10 @@ test_multi_word_message() {
         fail "multi-word message (couldn't create tmux session)"
         return
     fi
+    
+    # Start mock claude
+    tmux send-keys -t "$session:0" "$SCRIPT_DIR/../tests/mock-claude.sh" Enter
+    sleep 0.5
     
     output=$("$SCRIPT" "$session:0" "This is a longer test message" 2>&1)
     if [ $? -eq 0 ] && [[ "$output" =~ "This is a longer test message" ]]; then
@@ -117,6 +125,11 @@ test_tmux_message_exchange() {
     fi
     
     # Give tmux sessions time to start
+    sleep 0.5
+    
+    # Start mock claude in both sessions
+    tmux send-keys -t "$sender:0" "$SCRIPT_DIR/../tests/mock-claude.sh" Enter
+    tmux send-keys -t "$receiver:0" "$SCRIPT_DIR/../tests/mock-claude.sh" Enter
     sleep 0.5
     
     # Send a test message from sender to receiver using our script
@@ -158,6 +171,10 @@ test_special_characters() {
         fail "special characters (couldn't create tmux session)"
         return
     fi
+    
+    # Start mock claude
+    tmux send-keys -t "$session:0" "$SCRIPT_DIR/../tests/mock-claude.sh" Enter
+    sleep 0.5
     
     # Test with special characters (avoiding ones that might break the script)
     output=$("$SCRIPT" "$session:0" "Message with spaces and-dashes" 2>&1)

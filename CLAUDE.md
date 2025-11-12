@@ -16,6 +16,23 @@ As the Orchestrator, you maintain high-level oversight without getting bogged do
 - Make architectural decisions
 - Ensure quality standards are maintained
 
+### Orchestrator Agent Creation Checklist
+
+When creating any new agent, you MUST:
+
+- [ ] Use `start-claude-agent.sh` script, not manual commands
+- [ ] Verify the agent window exists before starting Claude
+- [ ] Wait for confirmation that Claude initialized
+- [ ] Check the window after briefing to ensure message was received
+- [ ] If agent doesn't respond after 10 seconds, re-send the briefing
+
+**Verification Command**:
+
+```bash
+# After creating agent, always verify it's working
+./check-claude-running.sh session:window && echo "✓ Claude is running" || echo "✗ Claude is not running"
+```
+
 ### Agent Hierarchy
 
 ```
@@ -301,6 +318,84 @@ tmux send-keys -t task-templates:0 "claude" Enter
 - Let the agent figure out project-specific details
 - Monitor for successful startup before considering task complete
 
+## Starting Agents: Correct Workflow
+
+### Step-by-Step Agent Creation
+
+When creating a new agent (PM, Developer, etc.), follow this exact sequence:
+
+#### 1. Create the tmux window
+
+```bash
+tmux new-window -t session -n "Agent-Name" -c "/project/path"
+```
+
+#### 2. Start Claude using the helper script
+
+```bash
+./start-claude-agent.sh session:window-index
+```
+
+#### 3. Wait for confirmation that Claude started
+
+The script will verify Claude is running before proceeding.
+
+#### 4. Send the briefing
+
+```bash
+./send-claude-message.sh session:window-index "Your briefing message here"
+```
+
+**OR** combine steps 2-4 with one command:
+
+```bash
+./start-claude-agent.sh session:window-index "Your briefing message here"
+```
+
+### Complete Example: Creating a PM
+
+```bash
+# 1. Create PM window in existing project session
+tmux new-window -t my-project -n "PM" -c "/Users/user/Coding/my-project"
+
+# 2. Start Claude and send briefing in one command
+./start-claude-agent.sh my-project:1 "You are the Project Manager for this project. Your responsibilities: 1) Quality Standards 2) Verification 3) Team Coordination. First, analyze the project in window 0, then introduce yourself."
+
+# 3. Verify the PM is active
+tmux capture-pane -t my-project:1 -p | tail -20
+```
+
+### Complete Example: PM Creating a Developer
+
+```bash
+# PM should run these commands (or orchestrator on PM's behalf):
+
+# 1. Create developer window
+tmux new-window -t my-project -n "Developer" -c "/Users/user/Coding/my-project"
+
+# 2. Start Claude with developer briefing
+./start-claude-agent.sh my-project:2 "You are the Developer for this project. Check the codebase, start the dev server in a separate window, and begin working on priority issues. Report progress to the PM in window 1."
+```
+
+### Anti-Pattern: What NOT to Do
+
+❌ **Don't do this:**
+
+```bash
+# Starting Claude and sending message in separate manual steps
+tmux send-keys -t session:0 "claude" Enter
+sleep 5
+tmux send-keys -t session:0 "Your message"
+tmux send-keys -t session:0 Enter  # ← This often fails!
+```
+
+✅ **Do this instead:**
+
+```bash
+# Use the helper script
+./start-claude-agent.sh session:0 "Your message"
+```
+
 ## Creating a Project Manager
 
 ### When User Says "Create a project manager for [session]"
@@ -328,12 +423,8 @@ tmux new-window -t [session] -n "Project-Manager" -c "$PROJECT_PATH"
 #### 3. Start and Brief the PM
 
 ```bash
-# Start Claude
-tmux send-keys -t [session]:[PM-window] "claude" Enter
-sleep 5
-
-# Send PM-specific briefing
-tmux send-keys -t [session]:[PM-window] "You are the Project Manager for this project. Your responsibilities:
+# Use the start-claude-agent.sh script with the PM briefing
+./start-claude-agent.sh [session]:[PM-window] "You are the Project Manager for this project. Your responsibilities:
 
 1. **Quality Standards**: Maintain exceptionally high standards. No shortcuts, no compromises.
 2. **Verification**: Test everything. Trust but verify all work.
@@ -349,8 +440,9 @@ Key Principles:
 - Communicate clearly and constructively
 
 First, analyze the project and existing team members, then introduce yourself to the developer in window 0."
-sleep 1
-tmux send-keys -t [session]:[PM-window] Enter
+
+# Verify the PM started successfully
+tmux capture-pane -t [session]:[PM-window] -p | tail -20
 ```
 
 #### 4. PM Introduction Protocol
@@ -361,10 +453,8 @@ The PM should:
 # Check developer window
 tmux capture-pane -t [session]:0 -p | tail -30
 
-# Introduce themselves
-tmux send-keys -t [session]:0 "Hello! I'm the new Project Manager for this project. I'll be helping coordinate our work and ensure we maintain high quality standards. Could you give me a brief status update on what you're currently working on?"
-sleep 1
-tmux send-keys -t [session]:0 Enter
+# Introduce themselves using the send-claude-message script
+./send-claude-message.sh [session]:0 "Hello! I'm the new Project Manager for this project. I'll be helping coordinate our work and ensure we maintain high quality standards. Could you give me a brief status update on what you're currently working on?"
 ```
 
 ## Communication Protocols
