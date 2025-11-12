@@ -1,0 +1,42 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [main, master, TheWyrdOne/Improvements]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install tmux
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tmux
+
+      - name: Verify tmux installation
+        run: tmux -V
+
+      - name: Make test scripts executable
+        run: |
+          chmod +x tests/*.sh
+          chmod +x *.sh
+
+      - name: Run test suite
+        run: ./tests/test-all.sh
+
+      - name: Test summary
+        if: always()
+        run: |
+          if [ $? -eq 0 ]; then
+            echo "✅ All tests passed!"
+          else
+            echo "❌ Some tests failed"
+            exit 1
+          fi
