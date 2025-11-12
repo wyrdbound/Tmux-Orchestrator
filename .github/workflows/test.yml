@@ -1,10 +1,7 @@
 name: Test Suite
 
 on:
-  push:
-    branches: [main, master, TheWyrdOne/Improvements]
   pull_request:
-    branches: [main, master]
   workflow_dispatch:
 
 jobs:
