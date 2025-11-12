@@ -447,6 +447,27 @@ PMs should implement:
 4. Security scanning
 5. Documentation audits
 
+### Running Tests
+
+#### Run All Tests
+```bash
+# Run the complete test suite
+./tests/test-all.sh
+```
+
+#### Run Individual Tests
+```bash
+# Run specific test files
+./tests/test-schedule-with-note.sh
+./tests/test-send-claude-message.sh
+```
+
+#### Test Requirements
+- All bash tests must be executable and named with pattern `test-*.sh`
+- Tests should be placed in the `tests/` directory
+- Each test should exit with status 0 for success, non-zero for failure
+- Tests should include clear output indicating pass/fail status
+
 ## Communication Rules
 
 1. **No Chit-Chat**: All messages work-related

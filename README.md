@@ -225,6 +225,27 @@ The script handles all timing complexities automatically, making agent communica
 echo "Current window: $(tmux display-message -p "#{session_name}:#{window_index}")"
 ```
 
+### 🧪 Running Tests
+
+Verify all core functionality is working correctly:
+
+```bash
+# Run the complete test suite
+./tests/test-all.sh
+
+# Run individual test files
+./tests/test-send-claude-message.sh
+./tests/test-schedule-with-note.sh
+```
+
+The test suite validates:
+- Message sending functionality between tmux windows
+- Scheduling system with note creation
+- Error handling and edge cases
+- Multi-session coordination
+
+All tests should pass before deploying agents to ensure reliable operation.
+
 ## 🎓 Advanced Usage
 
 ### Multi-Project Orchestration
@@ -255,6 +276,7 @@ The orchestrator can share insights between projects:
 - `CLAUDE.md` - Agent behavior instructions
 - `LEARNINGS.md` - Accumulated knowledge base
 - `tests/` - Test suites for bash scripts
+  - `test-all.sh` - Run all test suites with summary reporting
   - `test-send-claude-message.sh` - Tests for message sending script
   - `test-schedule-with-note.sh` - Tests for scheduling script
 
