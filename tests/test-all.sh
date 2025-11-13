@@ -54,10 +54,10 @@ echo "Discovering test files..."
 TEST_FILES=()
 while IFS= read -r -d '' file; do
     # Skip test-all.sh to avoid infinite recursion
-    if [[ "$(basename "$file")" != "test-all.sh" ]]; then
+    if [[ "$(basename "$file")" != "test-all.sh" && -x "$file" ]]; then
         TEST_FILES+=("$file")
     fi
-done < <(find "$SCRIPT_DIR" -name "test-*.sh" -type f -perm +111 -print0 | sort -z)
+done < <(find "$SCRIPT_DIR" -name "test-*.sh" -type f -print0 | sort -z)
 
 if [ ${#TEST_FILES[@]} -eq 0 ]; then
     echo -e "${YELLOW}⚠️  No test files found matching pattern 'test-*.sh'${NC}"
