@@ -47,7 +47,11 @@ fi
 
 # Check if Claude is actually running
 if [ -z "$COMMAND_LINE" ]; then
+    echo "Claude is NOT running in $WINDOW"
+    echo "To start Claude in this window, run:"
+    echo "  ./start-claude-agent.sh $WINDOW \"<your briefing message>\""
     exit 1  # Not running
 else
+    echo "Claude is running in $WINDOW"
     exit 0  # Running
 fi
