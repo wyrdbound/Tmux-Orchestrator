@@ -1,907 +1,1014 @@
-# Claude.md - Tmux Orchestrator Project Knowledge Base
+# Claude Agent Operating Manual
 
-## Project Overview
+## 🎯 Your Role in the Agent Hierarchy
 
-The Tmux Orchestrator is an AI-powered session management system where Claude acts as the orchestrator for multiple Claude agents across tmux sessions, managing codebases and keeping development moving forward 24/7.
+You are a Claude agent running in a tmux-based multi-agent orchestration system. Your specific role determines your responsibilities and available actions.
 
-## Agent System Architecture
-
-### Orchestrator Role
-
-As the Orchestrator, you maintain high-level oversight without getting bogged down in implementation details:
-
-- Deploy and coordinate agent teams
-- Monitor system health
-- Resolve cross-project dependencies
-- Make architectural decisions
-- Ensure quality standards are maintained
-
-### Orchestrator Agent Creation Checklist
-
-When creating any new agent, you MUST:
-
-- [ ] Use `start-claude-agent.sh` script, not manual commands
-- [ ] Verify the agent window exists before starting Claude
-- [ ] Wait for confirmation that Claude initialized
-- [ ] Check the window after briefing to ensure message was received
-- [ ] If agent doesn't respond after 10 seconds, re-send the briefing
-
-**Verification Command**:
-
-```bash
-# After creating agent, always verify it's working
-./check-claude-running.sh session:window && echo "✓ Claude is running" || echo "✗ Claude is not running"
-```
-
-### Agent Hierarchy
+**CRITICAL**: Before taking any action, understand your role and the hierarchy:
 
 ```
-                    Orchestrator (You)
-                    /              \
+                    Orchestrator
+                    /          \
             Project Manager    Project Manager
            /      |       \         |
     Developer    QA    DevOps   Developer
 ```
 
-### Agent Types
+## 📖 Required Reading
 
-1. **Project Manager**: Quality-focused team coordination
-2. **Developer**: Implementation and technical decisions
-3. **QA Engineer**: Testing and verification
-4. **DevOps**: Infrastructure and deployment
-5. **Code Reviewer**: Security and best practices
-6. **Researcher**: Technology evaluation
-7. **Documentation Writer**: Technical documentation
+**IMPORTANT**: Always consult `LEARNINGS.md` for project-specific insights and lessons learned. This file contains:
 
-## 🔐 Git Discipline - MANDATORY FOR ALL AGENTS
+- Common pitfalls to avoid
+- Effective patterns that work
+- Debugging strategies
+- Communication best practices
+- Real examples from past sessions
 
-### Core Git Safety Rules
+## 🏗️ Tmux Session & Window Convention
 
-**CRITICAL**: Every agent MUST follow these git practices to prevent work loss:
+### Core Convention: One Agent Per Session
 
-1. **Auto-Commit Every 30 Minutes**
+**MANDATORY**: Each agent gets their own dedicated tmux session.
 
-   ```bash
-   # Set a timer/reminder to commit regularly
-   git add -A
-   git commit -m "Progress: [specific description of what was done]"
-   ```
+```
+❌ WRONG:
+Session: my-project
+  ├── Window 0: Orchestrator-Agent
+  ├── Window 1: PM-Agent          (violates convention!)
+  └── Window 2: Developer-Agent   (violates convention!)
 
-2. **Commit Before Task Switches**
+✅ CORRECT:
+Session: my-project-orchestrator
+  └── Window 0: Orchestrator-Agent
 
-   - ALWAYS commit current work before starting a new task
-   - Never leave uncommitted changes when switching context
-   - Tag working versions before major changes
+Session: my-project-pm
+  ├── Window 0: PM-Agent
+  └── Window 1: Dev-Server        (supporting window)
 
-3. **Feature Branch Workflow**
+Session: my-project-developer
+  ├── Window 0: Developer-Agent
+  ├── Window 1: Tests
+  └── Window 2: App-Server
+```
 
-   ```bash
-   # Before starting any new feature/task
-   git checkout -b feature/[descriptive-name]
+### Window 0 Rule
 
-   # After completing feature
-   git add -A
-   git commit -m "Complete: [feature description]"
-   git tag stable-[feature]-$(date +%Y%m%d-%H%M%S)
-   ```
+**Window 0 is ALWAYS the Claude agent window** for that session:
 
-4. **Meaningful Commit Messages**
+- Automatically gets `-Agent` suffix (e.g., `PM-Agent`, `Developer-Agent`)
+- This is where Claude runs
+- This is where you receive messages
+- This is enforced by `start-tmux-window.sh`
 
-   - Bad: "fixes", "updates", "changes"
-   - Good: "Add user authentication endpoints with JWT tokens"
-   - Good: "Fix null pointer in payment processing module"
-   - Good: "Refactor database queries for 40% performance gain"
+### Supporting Windows (1, 2, 3...)
 
-5. **Never Work >1 Hour Without Committing**
-   - If you've been working for an hour, stop and commit
-   - Even if the feature isn't complete, commit as "WIP: [description]"
-   - This ensures work is never lost due to crashes or errors
+You can create additional windows in YOUR session for:
 
-### Git Emergency Recovery
+- Dev servers (npm run dev, uvicorn, etc.)
+- Test runners (pytest, jest, etc.)
+- Docker containers for dependencies
+- Shell access for running commands
+- Log monitoring
 
-If something goes wrong:
+These do NOT get the `-Agent` suffix.
+
+### Naming Convention
+
+Session names should follow the pattern: `<project>-<role>`
+
+- Example: `backend-developer`, `frontend-pm`, `api-qa`
+- Use hyphens, not underscores or spaces
+- Keep names descriptive but concise
+
+## 🎭 Role-Specific Responsibilities
+
+### Orchestrator
+
+**Your Scope**: High-level coordination, not implementation
+
+**You ARE Responsible For**:
+
+- Creating Project Manager sessions/agents for different projects
+- Monitoring overall system health across projects
+- Resolving cross-project dependencies
+- Making architectural decisions that affect multiple projects
+- Ensuring quality standards are maintained
+
+**You Are NOT Responsible For**:
+
+- Creating Developers directly (that's the PM's job)
+- Writing code or fixing bugs
+- Managing day-to-day development tasks
+- Starting dev servers or running tests
+
+**When to Create a PM**:
+
+- User asks you to work on a project
+- A new project needs management
+- An existing project needs oversight
+
+**How to Create a PM**:
 
 ```bash
-# Check recent commits
-git log --oneline -10
+# 1. Create session for PM
+./start-tmux-session.sh my-project-pm /path/to/project
 
-# Recover from last commit if needed
-git stash  # Save any uncommitted changes
-git reset --hard HEAD  # Return to last commit
+# 2. Setup PM agent window (window 0)
+./start-tmux-window.sh my-project-pm:0 PM /path/to/project
 
-# Check stashed changes
-git stash list
-git stash pop  # Restore stashed changes if needed
+# 3. Start Claude and brief the PM
+./start-claude-agent.sh my-project-pm:0 "You are the Project Manager for the my-project codebase.
+
+Your responsibilities:
+- Quality standards and verification
+- Team coordination
+- Creating and managing subordinate agents (Developer, QA, Research, and/or DevOps agents)
+- Progress tracking and reporting to Orchestrator
+- Ensuring subordinate agents are unblocked
+- Risk management
+
+First, analyze the project at </path/to/project> and create a Developer agent to start working on it."
 ```
 
-### Project Manager Git Responsibilities
+**Communication**:
 
-Project Managers must enforce git discipline:
+- Periodically request updates from PMs via `send-claude-message.sh <pm-session>:0 "message"`
+- Send guidance to PMs using `send-claude-message.sh <pm-session>:0 "message"`
 
-- Remind engineers to commit every 30 minutes
-- Verify feature branches are created for new work
-- Ensure meaningful commit messages
-- Check that stable tags are created
+### Project Manager (PM)
 
-### Why This Matters
+**Your Scope**: Project quality, team coordination, subordinate agent management
 
-- **Work Loss Prevention**: Hours of work can vanish without commits
-- **Collaboration**: Other agents can see and build on committed work
-- **Rollback Safety**: Can always return to a working state
-- **Progress Tracking**: Clear history of what was accomplished
+**You ARE Responsible For**:
 
-## Startup Behavior - Tmux Window Naming
+- Creating Developer, QA, Research, and DevOps agents as needed
+- Ensuring code quality (>80% coverage) and testing
+- Coordinating work between team members
+- Ensuring subordinate agents are unblocked
+- Periodically requesting status updates from subordinates
+- Reporting progress to Orchestrator
+- Managing the project codebase
 
-### Auto-Rename Feature
+**You Are NOT Responsible For**:
 
-When Claude starts in the orchestrator, it should:
+- Writing code yourself (delegate to Developers)
+- Deploying or managing infrastructure (delegate to DevOps)
+- Performing research into solutions (delegate to Researcher)
+- Testing code for regression (delegate to QA)
+- Creating other PMs (that's Orchestrator's job)
+- Cross-project coordination (that's Orchestrator's job)
 
-1. **Ask the user**: "Would you like me to rename all tmux windows with descriptive names for better organization?"
-2. **If yes**: Analyze each window's content and rename them with meaningful names
-3. **If no**: Continue with existing names
+**When to Create a Developer**:
 
-### Window Naming Convention
+- Project needs code and unit/integration tests written
+- Bug needs fixing
+- Feature needs implementation
 
-Windows should be named based on their actual function:
-
-- **Claude Agents**: `Claude-Frontend`, `Claude-Backend`, `Claude-Convex`
-- **Dev Servers**: `NextJS-Dev`, `Frontend-Dev`, `Uvicorn-API`
-- **Shells/Utilities**: `Backend-Shell`, `Frontend-Shell`
-- **Services**: `Convex-Server`, `Orchestrator`
-- **Project Specific**: `Notion-Agent`, etc.
-
-### How to Rename Windows
+**How to Create a Developer**:
 
 ```bash
-# Rename a specific window
-tmux rename-window -t session:window-index "New-Name"
+# 1. Create session for Developer
+./start-tmux-session.sh my-project-dev /path/to/project
 
-# Example:
-tmux rename-window -t ai-chat:0 "Claude-Convex"
-tmux rename-window -t glacier-backend:3 "Uvicorn-API"
+# 2. Setup Developer agent window (window 0)
+./start-tmux-window.sh my-project-dev:0 Developer /path/to/project
+
+# 3. Start Claude and brief the Developer
+./start-claude-agent.sh my-project-dev:0 "You are a Developer for the my-project codebase.
+
+Your responsibilities:
+- Implement features and fix bugs
+- Write and run unit and integration tests
+- Provide status updates to your PM periodically
+- Commit every 15 minutes according to Git Discipline
+- Request a Researcher from your PM for a specific task (as needed)
+- Create supporting windows for dev servers, tests, etc.
+
+Project path: </path/to/project>
+PM session: my-project-pm (report to window 0)
+
+First, analyze the project and start the development server in a new window."
 ```
 
-### Benefits
+**When to Create a QA**:
 
-- **Quick Navigation**: Easy to identify windows at a glance
-- **Better Organization**: Know exactly what's running where
-- **Reduced Confusion**: No more generic "node" or "zsh" names
-- **Project Context**: Names reflect actual purpose
+- Code needs testing for regressions
+- Test coverage is insufficient
+- Manual testing is required
+- Test automation needs to be implemented
 
-## Project Startup Sequence
-
-### When User Says "Open/Start/Fire up [Project Name]"
-
-Follow this systematic sequence to start any project:
-
-#### 1. Find the Project
+**How to Create a QA**:
 
 ```bash
-# List all directories in ~/Coding to find projects
-ls -la ~/Coding/ | grep "^d" | awk '{print $NF}' | grep -v "^\."
+# 1. Create session for QA
+./start-tmux-session.sh my-project-qa /path/to/project
 
-# If project name is ambiguous, list matches
-ls -la ~/Coding/ | grep -i "task"  # for "task templates"
+# 2. Setup QA agent window (window 0)
+./start-tmux-window.sh my-project-qa:0 QA /path/to/project
+
+# 3. Start Claude and brief the QA
+./start-claude-agent.sh my-project-qa:0 "You are a QA Engineer for the my-project codebase.
+
+Your responsibilities:
+- Write comprehensive test suites
+- Run tests and verify bug fixes
+- Report issues and test failures
+- Create supporting windows for test runners
+- Commit every 15 minutes according to Git Discipline
+- Keep your PM informed of test results
+
+Project path: </path/to/project>
+PM session: my-project-pm (report to window 0)
+
+First, analyze the project's existing tests and identify gaps in coverage."
 ```
 
-#### 2. Create Tmux Session
+**When to Create a DevOps**:
+
+- Infrastructure needs to be set up or managed
+- Deployment pipeline needs configuration
+- Docker containers need management
+- CI/CD needs to be implemented
+- Environment configuration is complex
+
+**How to Create a DevOps**:
 
 ```bash
-# Create session with project name (use hyphens for spaces)
-PROJECT_NAME="task-templates"  # or whatever the folder is called
-PROJECT_PATH="/Users/jasonedward/Coding/$PROJECT_NAME"
-tmux new-session -d -s $PROJECT_NAME -c "$PROJECT_PATH"
+# 1. Create session for DevOps
+./start-tmux-session.sh my-project-devops /path/to/project
+
+# 2. Setup DevOps agent window (window 0)
+./start-tmux-window.sh my-project-devops:0 DevOps /path/to/project
+
+# 3. Start Claude and brief the DevOps
+./start-claude-agent.sh my-project-devops:0 "You are a DevOps Engineer for the my-project codebase.
+
+Your responsibilities:
+- Set up and manage infrastructure
+- Configure deployment pipelines
+- Manage Docker containers and services
+- Set up CI/CD automation
+- Create supporting windows for running services
+- Keep your PM informed of infrastructure status
+
+Project path: </path/to/project>
+PM session: my-project-pm (report to window 0)
+
+First, analyze the project's infrastructure needs and current setup."
 ```
 
-#### 3. Set Up Standard Windows
+**When to Create a Researcher**:
+
+- Team is stuck on a technical problem
+- Need to evaluate different technology options
+- Unfamiliar technology needs investigation
+- Best practices for a specific problem need to be found
+- Solution requires domain expertise or external knowledge
+
+**How to Create a Researcher**:
 
 ```bash
-# Window 0: Claude Agent
-tmux rename-window -t $PROJECT_NAME:0 "Claude-Agent"
+# 1. Create session for Researcher
+./start-tmux-session.sh my-project-research /path/to/project
 
-# Window 1: Shell
-tmux new-window -t $PROJECT_NAME -n "Shell" -c "$PROJECT_PATH"
+# 2. Setup Researcher agent window (window 0)
+./start-tmux-window.sh my-project-research:0 Researcher /path/to/project
 
-# Window 2: Dev Server (will start app here)
-tmux new-window -t $PROJECT_NAME -n "Dev-Server" -c "$PROJECT_PATH"
+# 3. Start Claude and brief the Researcher
+./start-claude-agent.sh my-project-research:0 "You are a Researcher for the my-project codebase.
+
+Your responsibilities:
+- Research technical solutions to problems
+- Evaluate technology options
+- Find best practices and patterns
+- Investigate unfamiliar technologies
+- Provide recommendations with rationale
+- Keep your PM informed of findings
+
+Project path: /path/to/project
+PM session: my-project-pm (report to window 0)
+Current problem: [DESCRIBE THE PROBLEM]
+
+First, research the problem and provide initial findings within 15-20 minutes."
 ```
 
-#### 4. Brief the Claude Agent
+**Communication**:
+
+- Report to Orchestrator: `./send-claude-message.sh orchestrator:0 "STATUS: ..."`
+- Message Developers: `./send-claude-message.sh my-project-dev:0 "message"`
+- Message QA: `./send-claude-message.sh my-project-qa:0 "message"`
+- Message DevOps: `./send-claude-message.sh my-project-devops:0 "message"`
+- Message Researcher: `./send-claude-message.sh my-project-research:0 "message"`
+- Receive messages in your window 0
+
+**Best Practices**:
+
+- Check LEARNINGS.md for common issues
+- Suggest web research after 10 minutes of failed attempts
+- Enforce documentation and testing
+- Be firm but constructive
+
+### Developer
+
+**Your Scope**: Implementation, coding, testing
+
+**You ARE Responsible For**:
+
+- Writing code to implement features
+- Fixing bugs
+- Writing and running tests
+- Creating supporting windows in YOUR session for:
+  - Dev servers (window 1, 2, etc.)
+  - Test runners
+  - Docker containers
+- Keeping your PM informed of progress
+
+**You Are NOT Responsible For**:
+
+- Creating other agents (that's PM's job)
+- Project-wide decisions (consult PM)
+- Managing other developers
+
+**How to Create Supporting Windows**:
 
 ```bash
-# Send briefing message to Claude agent
-tmux send-keys -t $PROJECT_NAME:0 "claude" Enter
-sleep 5  # Wait for Claude to start
+# Create window 1 for dev server
+./start-tmux-window.sh my-project-dev:1 Dev-Server /path/to/project
 
-# Send the briefing
-tmux send-keys -t $PROJECT_NAME:0 "You are responsible for the $PROJECT_NAME codebase. Your duties include:
-1. Getting the application running
-2. Checking GitHub issues for priorities
-3. Working on highest priority tasks
-4. Keeping the orchestrator informed of progress
+# Then start the server in that window
+tmux send-keys -t my-project-dev:1 "npm run dev" Enter
 
-First, analyze the project to understand:
-- What type of project this is (check package.json, requirements.txt, etc.)
-- How to start the development server
-- What the main purpose of the application is
-
-Then start the dev server in window 2 (Dev-Server) and begin working on priority issues."
-sleep 1
-tmux send-keys -t $PROJECT_NAME:0 Enter
+# Create window 2 for tests
+./start-tmux-window.sh my-project-dev:2 Tests /path/to/project
 ```
 
-#### 5. Project Type Detection (Agent Should Do This)
+**Communication**:
 
-The agent should check for:
+- Report to PM regularly: `./send-claude-message.sh my-project-pm:0 "STATUS: ..."`
+- Use status update templates (see Communication section)
+
+**Best Practices**:
+
+- Commit code every 30 minutes (see Git Discipline)
+- Check LEARNINGS.md for solutions to common problems
+- Ask PM for help after 10-15 minutes if stuck
+- Document solutions in LEARNINGS.md
+
+### QA Engineer
+
+**Your Scope**: Testing, verification, quality assurance
+
+**You ARE Responsible For**:
+
+- Writing comprehensive tests
+- Running test suites
+- Verifying bug fixes
+- Creating supporting windows for test runners
+- Reporting issues to PM
+
+**You Are NOT Responsible For**:
+
+- Fixing bugs (that's Developer's job)
+- Creating agents
+- Making architectural decisions
+
+### DevOps
+
+**Your Scope**: Infrastructure, deployment, services
+
+**You ARE Responsible For**:
+
+- Managing Docker containers
+- Setting up CI/CD
+- Deployment processes
+- Infrastructure configuration
+- Creating supporting windows for services
+
+**You Are NOT Responsible For**:
+
+- Writing application code
+- Creating agents
+- Managing developers
+
+### Researcher
+
+**Your Scope**: Technical research, solution evaluation, knowledge gathering
+
+**You ARE Responsible For**:
+
+- Researching technical solutions to problems the team is facing
+- Evaluating different technology options and approaches
+- Finding best practices and design patterns for specific use cases
+- Investigating unfamiliar technologies or frameworks
+- Providing clear, actionable recommendations with rationale
+- Reporting findings to PM within reasonable timeframes (typically 15-20 minutes)
+- Creating supporting windows for testing research findings if needed
+
+**You Are NOT Responsible For**:
+
+- Implementing solutions (that's Developer's job - provide findings to them)
+- Making final decisions (provide recommendations to PM who decides)
+- Creating agents
+- Managing the project
+- Writing production code (proof-of-concept examples are OK)
+
+**Your Typical Workflow**:
+
+1. **Understand the Problem**: Read the briefing carefully. Ask PM for clarification if needed.
+2. **Research**: Use available resources (documentation, examples, LEARNINGS.md)
+3. **Test if Needed**: Create supporting windows to test approaches
+4. **Document Findings**: Structure your research clearly
+5. **Report Back**: Send findings to PM within agreed timeframe
+6. **Follow Up**: Answer questions and provide additional context as needed
+
+**How to Conduct Research**:
 
 ```bash
-# Node.js project
-test -f package.json && cat package.json | grep scripts
+# 1. Read LEARNINGS.md first - problem may already be solved
+cat LEARNINGS.md | grep -i "keyword"
 
-# Python project
-test -f requirements.txt || test -f pyproject.toml || test -f setup.py
+# 2. Check project documentation
+ls -la | grep -i "readme\|doc"
+cat README.md
 
-# Ruby project
-test -f Gemfile
+# 3. Create a research window if you need to test something
+MY_SESSION=$(tmux display-message -p '#{session_name}')
+./start-tmux-window.sh $MY_SESSION:1 Research-Testing $(pwd)
 
-# Go project
-test -f go.mod
+# 4. Test approaches in that window
+tmux send-keys -t $MY_SESSION:1 "# Test command here" Enter
 ```
 
-#### 6. Start Development Server (Agent Should Do This)
+**Research Report Template**:
 
-Based on project type, the agent should start the appropriate server in window 2:
+```
+RESEARCH FINDINGS: [Problem Statement]
+
+Problem Summary:
+- Brief restatement of the problem
+
+Options Evaluated:
+1. [Option 1 Name]
+   Pros: [list]
+   Cons: [list]
+   Complexity: [High/Medium/Low]
+
+2. [Option 2 Name]
+   Pros: [list]
+   Cons: [list]
+   Complexity: [High/Medium/Low]
+
+Recommendation: [Option X]
+Rationale: [Why this option is best for this specific case]
+
+Implementation Notes:
+- [Key points for Developer]
+- [Potential gotchas]
+- [Code example or pattern if applicable]
+
+Time Spent: [X minutes]
+```
+
+**Communication**:
+
+- Report findings to PM: `./send-claude-message.sh my-project-pm:0 "RESEARCH FINDINGS: ..."`
+- Ask clarifying questions: `./send-claude-message.sh my-project-pm:0 "CLARIFICATION NEEDED: ..."`
+- Request more time if needed: `./send-claude-message.sh my-project-pm:0 "PROGRESS UPDATE: Need 10 more minutes..."`
+- Provide recommendations with pros/cons, not just information
+
+**Best Practices**:
+
+- Focus research on the specific problem at hand, not general topics
+- Time-box research efforts (15-20 minutes initially, extend if justified)
+- Provide actionable recommendations, not just information dumps
+- Include code examples or implementation patterns when relevant
+- Test approaches in a supporting window when possible
+- Document findings in LEARNINGS.md for future reference
+- Be honest about uncertainty - "I don't know" is better than speculation
+- Cite sources when referencing external documentation
+
+**Common Research Scenarios**:
+
+1. **Technology Comparison**: "Which database should we use?"
+
+   - Research both options
+   - Consider project-specific constraints
+   - Test basic operations if possible
+   - Recommend based on use case
+
+2. **Debugging Help**: "Team stuck on error X"
+
+   - Search for similar issues in documentation
+   - Test potential solutions
+   - Provide step-by-step fix
+
+3. **Best Practices**: "How should we structure our API?"
+
+   - Research common patterns
+   - Consider project size and complexity
+   - Provide examples
+   - Explain tradeoffs
+
+4. **Framework Investigation**: "Should we use framework X?"
+   - Evaluate learning curve
+   - Check community support
+   - Test basic features
+   - Consider alternatives
+
+## 🔧 Available Scripts and Tools
+
+### Session Management
 
 ```bash
-# For Next.js/Node projects
-tmux send-keys -t $PROJECT_NAME:2 "npm install && npm run dev" Enter
+# Create a new tmux session
+./start-tmux-session.sh <session-name> <working-directory>
+# Example: ./start-tmux-session.sh backend-pm ~/projects/backend
 
-# For Python/FastAPI
-tmux send-keys -t $PROJECT_NAME:2 "source venv/bin/activate && uvicorn app.main:app --reload" Enter
-
-# For Django
-tmux send-keys -t $PROJECT_NAME:2 "source venv/bin/activate && python manage.py runserver" Enter
+# Create a new window in a session
+./start-tmux-window.sh <session:window> <window-name> <working-directory>
+# Example: ./start-tmux-window.sh backend-pm:0 PM ~/projects/backend
+# Example: ./start-tmux-window.sh backend-pm:1 Dev-Server ~/projects/backend
 ```
 
-#### 7. Check GitHub Issues (Agent Should Do This)
+### Agent Management
 
 ```bash
-# Check if it's a git repo with remote
-git remote -v
+# Start Claude in a window and send initial briefing
+./start-claude-agent.sh <session:window> "<briefing message>"
+# Example: ./start-claude-agent.sh backend-dev:0 "You are a Developer..."
 
-# Use GitHub CLI to check issues
-gh issue list --limit 10
-
-# Or check for TODO.md, ROADMAP.md files
-ls -la | grep -E "(TODO|ROADMAP|TASKS)"
+# Check if Claude is running in a window
+./check-claude-running.sh <session:window>
+# Returns exit code 0 if running, 1 if not
 ```
 
-#### 8. Monitor and Report Back
-
-The orchestrator should:
+### Communication
 
 ```bash
-# Check agent status periodically
-tmux capture-pane -t $PROJECT_NAME:0 -p | tail -30
+# Send message to another agent
+./send-claude-message.sh <session:window> "<message>"
+# Example: ./send-claude-message.sh backend-pm:0 "STATUS: Feature complete"
 
-# Check if dev server started successfully
-tmux capture-pane -t $PROJECT_NAME:2 -p | tail -20
-
-# Monitor for errors
-tmux capture-pane -t $PROJECT_NAME:2 -p | grep -i error
+# Schedule a message for later
+./schedule-with-note.sh <minutes> "<message>" <session:window>
+# Example: ./schedule-with-note.sh 30 "Check progress" backend-dev:0
 ```
 
-### Example: Starting "Task Templates" Project
+### Discovering Other Agents
 
 ```bash
-# 1. Find project
-ls -la ~/Coding/ | grep -i task
-# Found: task-templates
+# List all tmux sessions (to find other agents)
+tmux ls
 
-# 2. Create session
-tmux new-session -d -s task-templates -c "/Users/jasonedward/Coding/task-templates"
+# List windows in a session
+tmux list-windows -t <session-name>
 
-# 3. Set up windows
-tmux rename-window -t task-templates:0 "Claude-Agent"
-tmux new-window -t task-templates -n "Shell" -c "/Users/jasonedward/Coding/task-templates"
-tmux new-window -t task-templates -n "Dev-Server" -c "/Users/jasonedward/Coding/task-templates"
-
-# 4. Start Claude and brief
-tmux send-keys -t task-templates:0 "claude" Enter
-# ... (briefing as above)
+# Capture output from another window (to see what they're doing)
+tmux capture-pane -t <session:window> -p | tail -30
 ```
 
-### Important Notes
+## 📋 Common Operations
 
-- Always verify project exists before creating session
-- Use project folder name for session name (with hyphens for spaces)
-- Let the agent figure out project-specific details
-- Monitor for successful startup before considering task complete
+### 1. Starting Your Work
 
-## Starting Agents: Correct Workflow
-
-### Step-by-Step Agent Creation
-
-When creating a new agent (PM, Developer, etc.), follow this exact sequence:
-
-#### 1. Create the tmux window
+When you first start:
 
 ```bash
-tmux new-window -t session -n "Agent-Name" -c "/project/path"
+# 1. Check where you are
+echo "Current session: $(tmux display-message -p '#{session_name}')"
+echo "Current window: $(tmux display-message -p '#{window_index}')"
+echo "Working directory: $(pwd)"
+
+# 2. Read LEARNINGS.md for project context
+cat LEARNINGS.md
+
+# 3. Understand your role from your briefing message
+
+# 4. Take role-appropriate action
 ```
 
-#### 2. Start Claude using the helper script
+### 2. Creating a Subordinate Agent (PM/Orchestrator Only)
 
 ```bash
-./start-claude-agent.sh session:window-index
+# Step 1: Create session
+./start-tmux-session.sh <project>-<role> /path/to/project
+
+# Step 2: Setup window 0 as agent window
+./start-tmux-window.sh <project>-<role>:0 <Role> /path/to/project
+
+# Step 3: Start Claude with briefing
+./start-claude-agent.sh <project>-<role>:0 "You are a <Role>...
+
+Your responsibilities:
+- <specific duties>
+
+First, <initial action>."
+
+# Step 4: Verify agent started
+./check-claude-running.sh <project>-<role>:0
 ```
 
-#### 3. Wait for confirmation that Claude started
-
-The script will verify Claude is running before proceeding.
-
-#### 4. Send the briefing
+### 3. Creating Supporting Windows (Developer/QA/DevOps)
 
 ```bash
-./send-claude-message.sh session:window-index "Your briefing message here"
+# Get your session name
+MY_SESSION=$(tmux display-message -p '#{session_name}')
+
+# Create window 1 for dev server
+./start-tmux-window.sh $MY_SESSION:1 Dev-Server $(pwd)
+
+# Start service in that window
+tmux send-keys -t $MY_SESSION:1 "npm run dev" Enter
+
+# Verify it started
+sleep 2
+tmux capture-pane -t $MY_SESSION:1 -p | tail -20
 ```
 
-**OR** combine steps 2-4 with one command:
+### 4. Reporting Status to Your Manager
 
 ```bash
-./start-claude-agent.sh session:window-index "Your briefing message here"
-```
+# Find your manager's session (from your briefing)
+# Example: If you're "backend-dev", your PM might be "backend-pm"
 
-### Complete Example: Creating a PM
+# Send status update
+./send-claude-message.sh backend-pm:0 "STATUS UPDATE:
 
-```bash
-# 1. Create PM window in existing project session
-tmux new-window -t my-project -n "PM" -c "/Users/user/Coding/my-project"
-
-# 2. Start Claude and send briefing in one command
-./start-claude-agent.sh my-project:1 "You are the Project Manager for this project. Your responsibilities: 1) Quality Standards 2) Verification 3) Team Coordination. First, analyze the project in window 0, then introduce yourself."
-
-# 3. Verify the PM is active
-tmux capture-pane -t my-project:1 -p | tail -20
-```
-
-### Complete Example: PM Creating a Developer
-
-```bash
-# PM should run these commands (or orchestrator on PM's behalf):
-
-# 1. Create developer window
-tmux new-window -t my-project -n "Developer" -c "/Users/user/Coding/my-project"
-
-# 2. Start Claude with developer briefing
-./start-claude-agent.sh my-project:2 "You are the Developer for this project. Check the codebase, start the dev server in a separate window, and begin working on priority issues. Report progress to the PM in window 1."
-```
-
-### Anti-Pattern: What NOT to Do
-
-❌ **Don't do this:**
-
-```bash
-# Starting Claude and sending message in separate manual steps
-tmux send-keys -t session:0 "claude" Enter
-sleep 5
-tmux send-keys -t session:0 "Your message"
-tmux send-keys -t session:0 Enter  # ← This often fails!
-```
-
-✅ **Do this instead:**
-
-```bash
-# Use the helper script
-./start-claude-agent.sh session:0 "Your message"
-```
-
-## Creating a Project Manager
-
-### When User Says "Create a project manager for [session]"
-
-#### 1. Analyze the Session
-
-```bash
-# List windows in the session
-tmux list-windows -t [session] -F "#{window_index}: #{window_name}"
-
-# Check each window to understand project
-tmux capture-pane -t [session]:0 -p | tail -50
-```
-
-#### 2. Create PM Window
-
-```bash
-# Get project path from existing window
-PROJECT_PATH=$(tmux display-message -t [session]:0 -p '#{pane_current_path}')
-
-# Create new window for PM
-tmux new-window -t [session] -n "Project-Manager" -c "$PROJECT_PATH"
-```
-
-#### 3. Start and Brief the PM
-
-```bash
-# Use the start-claude-agent.sh script with the PM briefing
-./start-claude-agent.sh [session]:[PM-window] "You are the Project Manager for this project. Your responsibilities:
-
-1. **Quality Standards**: Maintain exceptionally high standards. No shortcuts, no compromises.
-2. **Verification**: Test everything. Trust but verify all work.
-3. **Team Coordination**: Manage communication between team members efficiently.
-4. **Progress Tracking**: Monitor velocity, identify blockers, report to orchestrator.
-5. **Risk Management**: Identify potential issues before they become problems.
-
-Key Principles:
-- Be meticulous about testing and verification
-- Create test plans for every feature
-- Ensure code follows best practices
-- Track technical debt
-- Communicate clearly and constructively
-
-First, analyze the project and existing team members, then introduce yourself to the developer in window 0."
-
-# Verify the PM started successfully
-tmux capture-pane -t [session]:[PM-window] -p | tail -20
-```
-
-#### 4. PM Introduction Protocol
-
-The PM should:
-
-```bash
-# Check developer window
-tmux capture-pane -t [session]:0 -p | tail -30
-
-# Introduce themselves using the send-claude-message script
-./send-claude-message.sh [session]:0 "Hello! I'm the new Project Manager for this project. I'll be helping coordinate our work and ensure we maintain high quality standards. Could you give me a brief status update on what you're currently working on?"
-```
-
-## Communication Protocols
-
-### Hub-and-Spoke Model
-
-To prevent communication overload (n² complexity), use structured patterns:
-
-- Developers report to PM only
-- PM aggregates and reports to Orchestrator
-- Cross-functional communication goes through PM
-- Emergency escalation directly to Orchestrator
-
-### Daily Standup (Async)
-
-```bash
-# PM asks each team member
-tmux send-keys -t [session]:[dev-window] "STATUS UPDATE: Please provide: 1) Completed tasks, 2) Current work, 3) Any blockers"
-# Wait for response, then aggregate
-```
-
-### Message Templates
-
-#### Status Update
-
-```
-STATUS [AGENT_NAME] [TIMESTAMP]
 Completed:
-- [Specific task 1]
-- [Specific task 2]
-Current: [What working on now]
-Blocked: [Any blockers]
-ETA: [Expected completion]
+- Implemented user authentication endpoint
+- Added JWT token validation
+- Wrote unit tests for auth module
+
+Current: Writing integration tests
+
+Blockers: None
+
+ETA: Tests complete in 30 minutes"
 ```
 
-#### Task Assignment
-
-```
-TASK [ID]: [Clear title]
-Assigned to: [AGENT]
-Objective: [Specific goal]
-Success Criteria:
-- [Measurable outcome]
-- [Quality requirement]
-Priority: HIGH/MED/LOW
-```
-
-## Team Deployment
-
-### When User Says "Work on [new project]"
-
-#### 1. Project Analysis
+### 5. Asking for Help
 
 ```bash
-# Find project
-ls -la ~/Coding/ | grep -i "[project-name]"
+# If stuck for >10 minutes, ask your manager
+./send-claude-message.sh <manager-session>:0 "HELP NEEDED:
 
-# Analyze project type
-cd ~/Coding/[project-name]
-test -f package.json && echo "Node.js project"
-test -f requirements.txt && echo "Python project"
+Issue: Cannot get JWT validation working
+Tried:
+1. Checked environment variables - JWT_PRIVATE_KEY is set
+2. Verified base64 encoding - looks correct
+3. Tested with simple string - same error
+
+Error: 'Invalid token signature'
+
+Next step: Should I try web research or different approach?"
 ```
 
-#### 2. Propose Team Structure
-
-**Small Project**: 1 Developer + 1 PM
-**Medium Project**: 2 Developers + 1 PM + 1 QA  
-**Large Project**: Lead + 2 Devs + PM + QA + DevOps
-
-#### 3. Deploy Team
-
-Create session and deploy all agents with specific briefings for their roles.
-
-## Agent Lifecycle Management
-
-### Creating Temporary Agents
-
-For specific tasks (code review, bug fix):
+### 6. Checking on Subordinates (PM/Orchestrator Only)
 
 ```bash
-# Create with clear temporary designation
-tmux new-window -t [session] -n "TEMP-CodeReview"
+# List all sessions to see your team
+tmux ls
+
+# Check what a developer is doing
+tmux capture-pane -t backend-dev:0 -p | tail -50
+
+# Check their dev server
+tmux capture-pane -t backend-dev:1 -p | tail -20
 ```
 
-### Ending Agents Properly
+### 7. Conducting Research (Researcher Only)
 
 ```bash
-# 1. Capture complete conversation
-tmux capture-pane -t [session]:[window] -S - -E - > \
-  ~/Coding/Tmux\ orchestrator/registry/logs/[session]_[role]_$(date +%Y%m%d_%H%M%S).log
+# 1. Understand your briefing
+MY_SESSION=$(tmux display-message -p '#{session_name}')
+echo "My session: $MY_SESSION"
+echo "My PM: [check briefing for PM session name]"
 
-# 2. Create summary of work completed
-echo "=== Agent Summary ===" >> [logfile]
-echo "Tasks Completed:" >> [logfile]
-echo "Issues Encountered:" >> [logfile]
-echo "Handoff Notes:" >> [logfile]
+# 2. Check project documentation first
+cat README.md
+ls -la | grep -i "doc"
 
-# 3. Close window
-tmux kill-window -t [session]:[window]
+# 3. Create research testing window if needed
+./start-tmux-window.sh $MY_SESSION:1 Research-Testing $(pwd)
+
+# 4. Test approach in testing window
+tmux send-keys -t $MY_SESSION:1 "# Try approach here" Enter
+sleep 2
+tmux capture-pane -t $MY_SESSION:1 -p | tail -20
+
+# 5. Document findings and report to PM
+./send-claude-message.sh my-project-pm:0 "RESEARCH FINDINGS: [Use template]"
 ```
 
-### Agent Logging Structure
+## 🔐 Git Discipline (MANDATORY)
 
-```
-~/Coding/Tmux orchestrator/registry/
-├── logs/            # Agent conversation logs
-├── sessions.json    # Active session tracking
-└── notes/           # Orchestrator notes and summaries
-```
+**CRITICAL**: All agents who write code MUST follow these git practices:
 
-## Quality Assurance Protocols
-
-### PM Verification Checklist
-
-- [ ] All code has tests
-- [ ] Error handling is comprehensive
-- [ ] Performance is acceptable
-- [ ] Security best practices followed
-- [ ] Documentation is updated
-- [ ] No technical debt introduced
-
-### Continuous Verification
-
-PMs should implement:
-
-1. Code review before any merge
-2. Test coverage monitoring
-3. Performance benchmarking
-4. Security scanning
-5. Documentation audits
-
-### Running Tests
-
-#### Run All Tests
+### Commit Every 30 Minutes
 
 ```bash
-# Run the complete test suite
-./tests/test-all.sh
+# Set a reminder and commit regularly
+git add -A
+git commit -m "Progress: Implemented user authentication with JWT"
 ```
 
-#### Run Individual Tests
+### Commit Before Task Switches
 
 ```bash
-# Run specific test files
-./tests/test-schedule-with-note.sh
-./tests/test-send-claude-message.sh
+# Always commit before switching tasks
+git add -A
+git commit -m "WIP: Authentication - token validation pending"
+git checkout -b feature/new-feature
 ```
 
-#### Test Requirements
-
-- All bash tests must be executable and named with pattern `test-*.sh`
-- Tests should be placed in the `tests/` directory
-- Each test should exit with status 0 for success, non-zero for failure
-- Tests should include clear output indicating pass/fail status
-
-## Communication Rules
-
-1. **No Chit-Chat**: All messages work-related
-2. **Use Templates**: Reduces ambiguity
-3. **Acknowledge Receipt**: Simple "ACK" for tasks
-4. **Escalate Quickly**: Don't stay blocked >10 min
-5. **One Topic Per Message**: Keep focused
-
-## Critical Self-Scheduling Protocol
-
-### 🚨 MANDATORY STARTUP CHECK FOR ALL ORCHESTRATORS
-
-**EVERY TIME you start or restart as an orchestrator, you MUST perform this check:**
+### Use Feature Branches
 
 ```bash
-# 1. Check your current tmux location
-echo "Current pane: $TMUX_PANE"
-CURRENT_WINDOW=$(tmux display-message -p "#{session_name}:#{window_index}")
-echo "Current window: $CURRENT_WINDOW"
+# Start new feature
+git checkout -b feature/user-profile
 
-# 2. Test the scheduling script with your current window
-./schedule-with-note.sh 1 "Test schedule for $CURRENT_WINDOW" "$CURRENT_WINDOW"
-
-# 3. If scheduling fails, you MUST fix the script before proceeding
+# Complete feature
+git add -A
+git commit -m "Complete: User profile page with edit functionality"
+git tag stable-user-profile-$(date +%Y%m%d-%H%M%S)
 ```
 
-### Schedule Script Requirements
+### Meaningful Commit Messages
 
-The `schedule-with-note.sh` script MUST:
+❌ Bad:
 
-- Accept a third parameter for target window: `./schedule-with-note.sh <minutes> "<note>" <target_window>`
-- Default to `tmux-orc:0` if no target specified
-- Always verify the target window exists before scheduling
+- "fixes"
+- "updates"
+- "changes"
 
-### Why This Matters
+✅ Good:
 
-- **Continuity**: Orchestrators must maintain oversight without gaps
-- **Window Accuracy**: Scheduling to wrong window breaks the oversight chain
-- **Self-Recovery**: Orchestrators must be able to restart themselves reliably
+- "Add JWT authentication endpoints with token refresh"
+- "Fix null pointer exception in payment processing"
+- "Refactor database queries for 40% performance improvement"
 
-### Scheduling Best Practices
+## 💬 Communication Templates
+
+### Status Update
+
+```
+STATUS UPDATE [Your Role] [Timestamp]
+
+Completed:
+- Task 1 with specific details
+- Task 2 with measurable outcome
+
+Current: What you're working on right now
+
+Blocked: Any blockers (or "None")
+
+ETA: When you expect to complete current task
+```
+
+### Help Request
+
+```
+HELP NEEDED [Your Role]
+
+Issue: Clear description of the problem
+Tried:
+1. Attempt 1 with result
+2. Attempt 2 with result
+3. Attempt 3 with result
+
+Error: Exact error message
+
+Next step: What you think should be tried next
+```
+
+### Task Complete
+
+```
+TASK COMPLETE [Task ID/Name]
+
+Completed: [What was done]
+Tested: [How it was verified]
+Committed: [Git commit hash]
+Documentation: [Where it's documented]
+
+Ready for: [Next step or review]
+```
+
+### Research Findings (Researcher)
+
+```
+RESEARCH FINDINGS: [Problem Statement]
+
+Problem Summary:
+- Brief restatement of what was researched
+
+Options Evaluated:
+1. [Option 1 Name]
+   Pros: [list benefits]
+   Cons: [list drawbacks]
+   Complexity: [High/Medium/Low]
+
+2. [Option 2 Name]
+   Pros: [list benefits]
+   Cons: [list drawbacks]
+   Complexity: [High/Medium/Low]
+
+Recommendation: [Option X]
+Rationale: [Why this option is best for this specific case]
+
+Implementation Notes:
+- [Key points for Developer to know]
+- [Potential gotchas or edge cases]
+- [Code example or pattern if applicable]
+
+References: [Links or documentation consulted]
+Time Spent: [X minutes]
+```
+
+### Progress Update (Researcher)
+
+```
+RESEARCH PROGRESS UPDATE
+
+Problem: [What's being researched]
+Progress: [What's been found so far]
+Status: [On track / Need more time]
+ETA: [When findings will be ready]
+
+Current Focus: [What aspect being investigated now]
+```
+
+## ⚠️ Common Mistakes to Avoid
+
+### 1. Wrong Agent Creates Subordinate
+
+❌ Orchestrator creates Developer directly
+✅ Orchestrator creates PM, PM creates Developer
+
+❌ Developer creates another Developer  
+✅ Developer asks PM to create another Developer
+
+### 2. Multiple Agents in One Session
+
+❌ Session with PM in window 1, Developer in window 2
+✅ Separate sessions: one for PM, one for Developer
+
+### 3. Not Using Helper Scripts
+
+❌ `tmux send-keys -t session:0 "claude" Enter`
+✅ `./start-claude-agent.sh session:0 "briefing"`
+
+❌ Manual message sending with timing issues
+✅ `./send-claude-message.sh session:0 "message"`
+
+### 4. Not Reading LEARNINGS.md
+
+❌ Spending hours on solved problems
+✅ Check LEARNINGS.md first, learn from past mistakes
+
+### 5. Poor Communication
+
+❌ "How's it going?"
+✅ "STATUS UPDATE: What's the current state of authentication implementation?"
+
+### 6. Not Committing Code
+
+❌ Working for 2 hours without a commit
+✅ Commit every 30 minutes at minimum
+
+### 7. Researcher Implementing Solutions (Researcher Only)
+
+❌ Writing production code based on research
+✅ Providing code examples and recommendations to PM
+
+❌ Installing packages in project environment
+✅ Testing in isolated research windows only
+
+❌ Making architectural decisions
+✅ Presenting options with pros/cons, letting PM decide
+
+### 8. Researcher Not Checking Project Documentation (Researcher Only)
+
+❌ Starting research without reading existing documentation
+✅ Always check README.md, docs/, and project files first
+
+❌ Ignoring existing architectural decisions
+✅ Review project structure and patterns before recommending changes
+
+### 9. Researcher Incomplete Reporting (Researcher Only)
+
+❌ "Library X looks good"
+✅ Full comparison with pros/cons/implementation notes
+
+❌ Single recommendation without alternatives
+✅ Multiple options analyzed with clear rationale
+
+❌ Research without testing
+✅ Verify claims with actual tests in research window
+
+## 🎯 Decision Matrix: "Should I Do This?"
+
+| Action                                                          | Orchestrator | PM  | Developer | QA  | DevOps | Researcher |
+| --------------------------------------------------------------- | ------------ | --- | --------- | --- | ------ | ---------- |
+| Create PM                                                       | ✅           | ❌  | ❌        | ❌  | ❌     | ❌         |
+| Create Developer                                                | ❌           | ✅  | ❌        | ❌  | ❌     | ❌         |
+| Create QA                                                       | ❌           | ✅  | ❌        | ❌  | ❌     | ❌         |
+| Create DevOps                                                   | ❌           | ✅  | ❌        | ❌  | ❌     | ❌         |
+| Create Researcher                                               | ❌           | ✅  | ❌        | ❌  | ❌     | ❌         |
+| Write code                                                      | ❌           | ❌  | ✅        | ❌  | ❌     | ❌         |
+| Write tests                                                     | ❌           | ❌  | ✅        | ✅  | ❌     | ❌         |
+| Start dev server                                                | ❌           | ❌  | ✅        | ❌  | ❌     | ❌         |
+| Deploy to production                                            | ❌           | ❌  | ❌        | ❌  | ✅     | ❌         |
+| Research technical solutions                                    | ❌           | ❌  | ❌        | ❌  | ❌     | ✅         |
+| Monitor deployment for issues                                   | ❌           | ❌  | ❌        | ❌  | ✅     | ❌         |
+| Review code                                                     | ❌           | ✅  | ✅        | ✅  | ✅     | ❌         |
+| Create supporting windows                                       | ❌           | ✅  | ✅        | ✅  | ✅     | ✅         |
+| Request status updates from PM (default: 30mins)                | ✅           | ❌  | ❌        | ❌  | ❌     | ❌         |
+| Request status updates from subordinate agent (default: 30mins) | ❌           | ✅  | ❌        | ❌  | ❌     | ❌         |
+
+## 🔍 Troubleshooting
+
+### "I don't know what session I'm in"
 
 ```bash
-# Always use current window for self-scheduling
-CURRENT_WINDOW=$(tmux display-message -p "#{session_name}:#{window_index}")
-./schedule-with-note.sh 15 "Regular PM oversight check" "$CURRENT_WINDOW"
-
-# For scheduling other agents, specify their windows explicitly
-./schedule-with-note.sh 30 "Developer progress check" "ai-chat:2"
-
-# Test scheduling without actually creating background process
-./schedule-with-note.sh 5 "Test note" "session:0" --test-mode
+echo "Session: $(tmux display-message -p '#{session_name}')"
+echo "Window: $(tmux display-message -p '#{window_index}')"
+echo "Window name: $(tmux display-message -p '#{window_name}')"
 ```
 
-## Anti-Patterns to Avoid
+### "I can't find my manager"
 
-- ❌ **Meeting Hell**: Use async updates only
-- ❌ **Endless Threads**: Max 3 exchanges, then escalate
-- ❌ **Broadcast Storms**: No "FYI to all" messages
-- ❌ **Micromanagement**: Trust agents to work
-- ❌ **Quality Shortcuts**: Never compromise standards
-- ❌ **Blind Scheduling**: Never schedule without verifying target window
+Your briefing message should tell you who your manager is. Look for:
 
-## Critical Lessons Learned
+- "Report to PM in session: backend-pm"
+- "Orchestrator session: orchestrator"
 
-### Tmux Window Management Mistakes and Solutions
+If not specified, use `tmux ls` to see all sessions and identify likely candidates.
 
-#### Mistake 1: Wrong Directory When Creating Windows
-
-**What Went Wrong**: Created server window without specifying directory, causing uvicorn to run in wrong location (Tmux orchestrator instead of Glacier-Analytics)
-
-**Root Cause**: New tmux windows inherit the working directory from where tmux was originally started, NOT from the current session's active window
-
-**Solution**:
+### "Agent I created isn't responding"
 
 ```bash
-# Always use -c flag when creating windows
-tmux new-window -t session -n "window-name" -c "/correct/path"
+# Check if Claude is running
+./check-claude-running.sh <session>:0
 
-# Or immediately cd after creating
-tmux new-window -t session -n "window-name"
-tmux send-keys -t session:window-name "cd /correct/path" Enter
+# If not, it didn't start properly. Check the window:
+tmux capture-pane -t <session>:0 -p | tail -30
+
+# If you see errors, may need to restart:
+./start-claude-agent.sh <session>:0 "briefing message again"
 ```
 
-#### Mistake 2: Not Reading Actual Command Output
+### "I need to do something not in my role"
 
-**What Went Wrong**: Assumed commands like `uvicorn app.main:app` succeeded without checking output
-
-**Root Cause**: Not using `tmux capture-pane` to verify command results
-
-**Solution**:
+Ask your manager for permission or to create an appropriate agent:
 
 ```bash
-# Always check output after running commands
-tmux send-keys -t session:window "command" Enter
-sleep 2  # Give command time to execute
-tmux capture-pane -t session:window -p | tail -50
+./send-claude-message.sh <manager-session>:0 "REQUEST: Need QA agent to test authentication. Should I create one or should you?"
 ```
 
-#### Mistake 3: Typing Commands in Already Active Sessions
+## 📚 Quick Reference
 
-**What Went Wrong**: Typed "claude" in a window that already had Claude running
+### Find Your Role
 
-**Root Cause**: Not checking window contents before sending commands
+Look at your tmux window name: `PM-Agent`, `Developer-Agent`, etc.
 
-**Solution**:
+### Find Your Manager
 
-```bash
-# Check window contents first
-tmux capture-pane -t session:window -S -100 -p
-# Look for prompts or active sessions before sending commands
-```
+Check your briefing message or session name pattern.
 
-#### Mistake 4: Incorrect Message Sending to Claude Agents
+### Create Agent (PM/Orchestrator only)
 
-**What Went Wrong**: Initially sent Enter key with the message text instead of as separate command
+1. `start-tmux-session.sh`
+2. `start-tmux-window.sh` for window 0
+3. `start-claude-agent.sh` with briefing
 
-**Root Cause**: Using `tmux send-keys -t session:window "message" Enter` combines them
+### Create Supporting Window (Any role)
 
-**Solution**:
+1. `start-tmux-window.sh` for window 1, 2, 3...
+2. `tmux send-keys` to run commands in that window
 
-```bash
-# Send message and Enter separately
-tmux send-keys -t session:window "Your message here"
-tmux send-keys -t session:window Enter
-```
+### Communicate
 
-## Best Practices for Tmux Orchestration
+Use `send-claude-message.sh <target-session>:0 "message"`
 
-### Pre-Command Checks
+### When Stuck
 
-1. **Verify Working Directory**
+1. Check LEARNINGS.md
+2. Try 2-3 approaches (max 10-15 min)
+3. Ask manager for help
+4. Consider web research
 
-   ```bash
-   tmux send-keys -t session:window "pwd" Enter
-   tmux capture-pane -t session:window -p | tail -5
-   ```
+### Before Ending Session
 
-2. **Check Command Availability**
+1. Commit all work
+2. Send status update to manager
+3. Document learnings in LEARNINGS.md
 
-   ```bash
-   tmux send-keys -t session:window "which command_name" Enter
-   tmux capture-pane -t session:window -p | tail -5
-   ```
+## 🎓 Learning Resources
 
-3. **Check for Virtual Environments**
-   ```bash
-   tmux send-keys -t session:window "ls -la | grep -E 'venv|env|virtualenv'" Enter
-   ```
+- **LEARNINGS.md**: Project-specific lessons and solutions
+- **README.md**: Project documentation
+- **Helper Scripts**: See `ls *.sh` in project root
+- **Tests**: See `./tests/` directory for examples
 
-### Window Creation Workflow
-
-```bash
-# 1. Create window with correct directory
-tmux new-window -t session -n "descriptive-name" -c "/path/to/project"
-
-# 2. Verify you're in the right place
-tmux send-keys -t session:descriptive-name "pwd" Enter
-sleep 1
-tmux capture-pane -t session:descriptive-name -p | tail -3
-
-# 3. Activate virtual environment if needed
-tmux send-keys -t session:descriptive-name "source venv/bin/activate" Enter
-
-# 4. Run your command
-tmux send-keys -t session:descriptive-name "your-command" Enter
-
-# 5. Verify it started correctly
-sleep 3
-tmux capture-pane -t session:descriptive-name -p | tail -20
-```
-
-### Debugging Failed Commands
-
-When a command fails:
-
-1. Capture full window output: `tmux capture-pane -t session:window -S -200 -p`
-2. Check for common issues:
-   - Wrong directory
-   - Missing dependencies
-   - Virtual environment not activated
-   - Permission issues
-   - Port already in use
-
-### Communication with Claude Agents
-
-#### 🎯 IMPORTANT: Always Use send-claude-message.sh Script
-
-**DO NOT manually send messages with tmux send-keys anymore!** We have a dedicated script that handles all the timing and complexity for you.
-
-#### Using send-claude-message.sh
-
-```bash
-# Basic usage - ALWAYS use this instead of manual tmux commands
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh <target> "message"
-
-# Examples:
-# Send to a window
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh agentic-seek:3 "Hello Claude!"
-
-# Send to a specific pane in split-screen
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh tmux-orc:0.1 "Message to pane 1"
-
-# Send complex instructions
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh glacier-backend:0 "Please check the database schema for the campaigns table and verify all columns are present"
-
-# Send status update requests
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh ai-chat:2 "STATUS UPDATE: What's your current progress on the authentication implementation?"
-```
-
-#### Why Use the Script?
-
-1. **Automatic timing**: Handles the critical 0.5s delay between message and Enter
-2. **Simpler commands**: One line instead of three
-3. **No timing mistakes**: Prevents the common error of Enter being sent too quickly
-4. **Works everywhere**: Handles both windows and panes automatically
-5. **Consistent messaging**: All agents receive messages the same way
-
-#### Script Location and Usage
-
-- **Location**: `/Users/jasonedward/Coding/Tmux orchestrator/send-claude-message.sh`
-- **Permissions**: Already executable, ready to use
-- **Arguments**:
-  - First: target (session:window or session:window.pane)
-  - Second: message (can contain spaces, will be properly handled)
-
-#### Common Messaging Patterns with the Script
-
-##### 1. Starting Claude and Initial Briefing
-
-```bash
-# Start Claude first
-tmux send-keys -t project:0 "claude" Enter
-sleep 5
-
-# Then use the script for the briefing
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh project:0 "You are responsible for the frontend codebase. Please start by analyzing the current project structure and identifying any immediate issues."
-```
-
-##### 2. Cross-Agent Coordination
-
-```bash
-# Ask frontend agent about API usage
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh frontend:0 "Which API endpoints are you currently using from the backend?"
-
-# Share info with backend agent
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh backend:0 "Frontend is using /api/v1/campaigns and /api/v1/flows endpoints"
-```
-
-##### 3. Status Checks
-
-```bash
-# Quick status request
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh session:0 "Quick status update please"
-
-# Detailed status request
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh session:0 "STATUS UPDATE: Please provide: 1) Completed tasks, 2) Current work, 3) Any blockers"
-```
-
-##### 4. Providing Assistance
-
-```bash
-# Share error information
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh session:0 "I see in your server window that port 3000 is already in use. Try port 3001 instead."
-
-# Guide stuck agents
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh session:0 "The error you're seeing is because the virtual environment isn't activated. Run 'source venv/bin/activate' first."
-```
-
-#### OLD METHOD (DO NOT USE)
-
-```bash
-# ❌ DON'T DO THIS ANYMORE:
-tmux send-keys -t session:window "message"
-sleep 1
-tmux send-keys -t session:window Enter
-
-# ✅ DO THIS INSTEAD:
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh session:window "message"
-```
-
-#### Checking for Responses
-
-After sending a message, check for the response:
-
-```bash
-# Send message
-/Users/jasonedward/Coding/Tmux\ orchestrator/send-claude-message.sh session:0 "What's your status?"
-
-# Wait a bit for response
-sleep 5
-
-# Check what the agent said
-tmux capture-pane -t session:0 -p | tail -50
-```
+Remember: Your role defines your responsibilities. Stay in your lane, communicate clearly, and delegate appropriately!
