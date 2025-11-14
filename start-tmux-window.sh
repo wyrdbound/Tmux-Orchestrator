@@ -98,14 +98,16 @@ if [ "$WINDOW_INDEX" -eq 0 ]; then
     else
         # This shouldn't happen as tmux always creates window 0, but handle it
         echo "Creating window 0..."
-        tmux new-window -t "$SESSION_NAME:0" -n "$FINAL_WINDOW_NAME" -c "$WORKING_DIR"
+        tmux new-window -d -t "$SESSION_NAME:0" -n "$FINAL_WINDOW_NAME" -c "$WORKING_DIR"
         tmux set-window-option -t "$SESSION_NAME:0" automatic-rename off
     fi
 else
-    # Create new window at specific index
-    tmux new-window -t "$SESSION_NAME:$WINDOW_INDEX" -n "$FINAL_WINDOW_NAME" -c "$WORKING_DIR"
+    # Create new window at specific index IN DETACHED MODE (don't switch to it)
+    tmux new-window -d -t "$SESSION_NAME:$WINDOW_INDEX" -n "$FINAL_WINDOW_NAME" -c "$WORKING_DIR"
     # Disable automatic-rename to keep our chosen name
     tmux set-window-option -t "$SESSION_NAME:$WINDOW_INDEX" automatic-rename off
+    # Brief pause to ensure tmux has processed the window creation
+    sleep 0.1
 fi
 
 # Verify window was created/renamed
