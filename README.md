@@ -5,7 +5,7 @@
 ## 🤖 Key Capabilities & Autonomous Features
 
 - **Self-trigger** - Agents schedule their own check-ins and continue work autonomously
-- **Coordinate** - Project managers assign tasks to engineers across multiple codebases  
+- **Coordinate** - Project managers assign tasks to engineers across multiple codebases
 - **Persist** - Work continues even when you close your laptop
 - **Scale** - Run multiple teams working on different projects simultaneously
 
@@ -31,6 +31,7 @@ The Tmux Orchestrator uses a three-tier hierarchy to overcome context window lim
 ```
 
 ### Why Separate Agents?
+
 - **Limited context windows** - Each agent stays focused on its role
 - **Specialized expertise** - PMs manage, engineers code
 - **Parallel work** - Multiple engineers can work simultaneously
@@ -39,20 +40,24 @@ The Tmux Orchestrator uses a three-tier hierarchy to overcome context window lim
 ## 📸 Examples in Action
 
 ### Project Manager Coordination
+
 ![Initiate Project Manager](Examples/Initiate%20Project%20Manager.png)
-*The orchestrator creating and briefing a new project manager agent*
+_The orchestrator creating and briefing a new project manager agent_
 
 ### Status Reports & Monitoring
+
 ![Status Reports](Examples/Status%20reports.png)
-*Real-time status updates from multiple agents working in parallel*
+_Real-time status updates from multiple agents working in parallel_
 
 ### Tmux Communication
+
 ![Reading TMUX Windows and Sending Messages](Examples/Reading%20TMUX%20Windows%20and%20Sending%20Messages.png)
-*How agents communicate across tmux windows and sessions*
+_How agents communicate across tmux windows and sessions_
 
 ### Project Completion
+
 ![Project Completed](Examples/Project%20Completed.png)
-*Successful project completion with all tasks verified and committed*
+_Successful project completion with all tasks verified and committed_
 
 ## 🎯 Quick Start
 
@@ -65,7 +70,7 @@ PROJECT: My Web App
 GOAL: Add user authentication system
 CONSTRAINTS:
 - Use existing database schema
-- Follow current code patterns  
+- Follow current code patterns
 - Commit every 30 minutes
 - Write tests for new features
 
@@ -82,11 +87,11 @@ tmux new-session -s my-project
 claude
 
 # 4. Give PM the spec and let it create an engineer
-"You are a Project Manager. Read project_spec.md and create an engineer 
+"You are a Project Manager. Read project_spec.md and create an engineer
 in window 1 to implement it. Schedule check-ins every 30 minutes."
 
 # 5. Schedule orchestrator check-in
-./schedule_with_note.sh 30 "Check PM progress on auth system"
+./schedule-with-note.sh 30 "Check PM progress on auth system"
 ```
 
 ### Option 2: Full Orchestrator Setup
@@ -106,22 +111,27 @@ Schedule yourself to check in every hour."
 ## ✨ Key Features
 
 ### 🔄 Self-Scheduling Agents
+
 Agents can schedule their own check-ins using:
+
 ```bash
-./schedule_with_note.sh 30 "Continue dashboard implementation"
+./schedule-with-note.sh 30 "Continue dashboard implementation"
 ```
 
 ### 👥 Multi-Agent Coordination
+
 - Project managers communicate with engineers
 - Orchestrator monitors all project managers
 - Cross-project knowledge sharing
 
 ### 💾 Automatic Git Backups
+
 - Commits every 30 minutes of work
 - Tags stable versions
 - Creates feature branches for experiments
 
 ### 📊 Real-Time Monitoring
+
 - See what every agent is doing
 - Intervene when needed
 - Review progress across all projects
@@ -135,20 +145,23 @@ PROJECT: E-commerce Checkout
 GOAL: Implement multi-step checkout process
 
 CONSTRAINTS:
+
 - Use existing cart state management
 - Follow current design system
 - Maximum 3 API endpoints
 - Commit after each step completion
 
 DELIVERABLES:
+
 1. Shipping address form with validation
 2. Payment method selection (Stripe integration)
 3. Order review and confirmation page
 4. Success/failure handling
 
 SUCCESS CRITERIA:
+
 - All forms validate properly
-- Payment processes without errors  
+- Payment processes without errors
 - Order data persists to database
 - Emails send on completion
 ```
@@ -156,12 +169,14 @@ SUCCESS CRITERIA:
 ### Git Safety Rules
 
 1. **Before Starting Any Task**
+
    ```bash
    git checkout -b feature/[task-name]
    git status  # Ensure clean state
    ```
 
 2. **Every 30 Minutes**
+
    ```bash
    git add -A
    git commit -m "Progress: [what was accomplished]"
@@ -176,18 +191,20 @@ SUCCESS CRITERIA:
 
 ## 🚨 Common Pitfalls & Solutions
 
-| Pitfall | Consequence | Solution |
-|---------|-------------|----------|
-| Vague instructions | Agent drift, wasted compute | Write clear, specific specs |
-| No git commits | Lost work, frustrated devs | Enforce 30-minute commit rule |
-| Too many tasks | Context overload, confusion | One task per agent at a time |
-| No specifications | Unpredictable results | Always start with written spec |
-| Missing checkpoints | Agents stop working | Schedule regular check-ins |
+| Pitfall             | Consequence                 | Solution                       |
+| ------------------- | --------------------------- | ------------------------------ |
+| Vague instructions  | Agent drift, wasted compute | Write clear, specific specs    |
+| No git commits      | Lost work, frustrated devs  | Enforce 30-minute commit rule  |
+| Too many tasks      | Context overload, confusion | One task per agent at a time   |
+| No specifications   | Unpredictable results       | Always start with written spec |
+| Missing checkpoints | Agents stop working         | Schedule regular check-ins     |
 
 ## 🛠️ How It Works
 
 ### The Magic of Tmux
+
 Tmux (terminal multiplexer) is the key enabler because:
+
 - It persists terminal sessions even when disconnected
 - Allows multiple windows/panes in one session
 - Claude runs in the terminal, so it can control other Claude instances
@@ -195,43 +212,92 @@ Tmux (terminal multiplexer) is the key enabler because:
 
 ### 💬 Simplified Agent Communication
 
-We now use the `send-claude-message.sh` script for all agent communication:
+We provide helper scripts for reliable agent communication and management:
 
 ```bash
-# Send message to any Claude agent
-./send-claude-message.sh session:window "Your message here"
+# Check if Claude is running in a window
+./check-claude-running.sh session:window
+# Returns: exit code 0 if running, 1 if not, 2 for errors
 
-# Examples:
-./send-claude-message.sh frontend:0 "What's your progress on the login form?"
-./send-claude-message.sh backend:1 "The API endpoint /api/users is returning 404"
-./send-claude-message.sh project-manager:0 "Please coordinate with the QA team"
+# Start a new Claude agent with optional briefing
+./start-claude-agent.sh session:window "You are the PM for this project..."
+
+# Send message to a running Claude agent
+./send-claude-message.sh session:window "Your message here"
 ```
 
-The script handles all timing complexities automatically, making agent communication reliable and consistent.
+**Examples:**
+
+```bash
+# Verify Claude is running before sending a message
+./check-claude-running.sh frontend:0 && echo "✓ Ready" || echo "✗ Not running"
+
+# Create a new PM agent
+tmux new-window -t project -n "PM" -c "/path/to/project"
+./start-claude-agent.sh project:1 "You are the Project Manager. Review the codebase and create a developer in window 2."
+
+# Send status request
+./send-claude-message.sh backend:1 "STATUS UPDATE: What's your progress on the API endpoints?"
+```
+
+These scripts handle all timing complexities and verification automatically, making agent communication reliable and consistent.
 
 ### Scheduling Check-ins
+
 ```bash
 # Schedule with specific, actionable notes
-./schedule_with_note.sh 30 "Review auth implementation, assign next task"
-./schedule_with_note.sh 60 "Check test coverage, merge if passing"
-./schedule_with_note.sh 120 "Full system check, rotate tasks if needed"
+./schedule-with-note.sh 30 "Review auth implementation, assign next task" "session:0"
+./schedule-with-note.sh 60 "Check test coverage, merge if passing" "session:1"
+./schedule-with-note.sh 120 "Full system check, rotate tasks if needed" "session:2"
+
+# Test scheduling (useful for debugging)
+./schedule-with-note.sh 5 "Test note" "session:0" --test-mode
 ```
 
 **Important**: The orchestrator needs to know which tmux window it's running in to schedule its own check-ins correctly. If scheduling isn't working, verify the orchestrator knows its current window with:
+
 ```bash
 echo "Current window: $(tmux display-message -p "#{session_name}:#{window_index}")"
 ```
 
+### 🧪 Running Tests
+
+Verify all core functionality is working correctly:
+
+```bash
+# Run the complete test suite
+./tests/test-all.sh
+
+# Run individual test files
+./tests/test-check-claude-running.sh  # Claude detection
+./tests/test-send-claude-message.sh   # Message sending
+./tests/test-schedule-with-note.sh    # Scheduling
+./tests/test-start-claude-agent.sh    # Agent startup
+./tests/test-integration.sh           # Full workflow
+```
+
+The test suite validates:
+
+- Claude detection using process inspection
+- Message sending functionality between tmux windows
+- Scheduling system with note creation
+- Agent startup and verification
+- Error handling and edge cases
+- Multi-session coordination
+
+All tests should pass before deploying agents to ensure reliable operation.
+
 ## 🎓 Advanced Usage
 
 ### Multi-Project Orchestration
+
 ```bash
 # Start orchestrator
 tmux new-session -s orchestrator
 
 # Create project managers for each project
 tmux new-window -n frontend-pm
-tmux new-window -n backend-pm  
+tmux new-window -n backend-pm
 tmux new-window -n mobile-pm
 
 # Each PM manages their own engineers
@@ -239,18 +305,41 @@ tmux new-window -n mobile-pm
 ```
 
 ### Cross-Project Intelligence
+
 The orchestrator can share insights between projects:
+
 - "Frontend is using /api/v2/users, update backend accordingly"
 - "Authentication is working in Project A, use same pattern in Project B"
 - "Performance issue found in shared library, fix across all projects"
 
 ## 📚 Core Files
 
-- `send-claude-message.sh` - Simplified agent communication script
-- `schedule_with_note.sh` - Self-scheduling functionality
+### Helper Scripts
+
+- `check-claude-running.sh` - Verify if Claude is running in a tmux window
+- `start-claude-agent.sh` - Start Claude agent with optional briefing
+- `send-claude-message.sh` - Send messages to running Claude agents
+- `schedule-with-note.sh` - Self-scheduling functionality with `--test-mode`
+
+### Utilities
+
 - `tmux_utils.py` - Tmux interaction utilities
-- `CLAUDE.md` - Agent behavior instructions
-- `LEARNINGS.md` - Accumulated knowledge base
+
+### Documentation
+
+- `CLAUDE.md` - Complete agent behavior instructions and workflows
+- `LEARNINGS.md` - Accumulated knowledge base and lessons learned
+- `QUICK_REFERENCE.md` - Quick reference guide for common operations
+
+### Tests
+
+- `tests/test-all.sh` - Run all test suites with summary reporting
+- `tests/test-check-claude-running.sh` - Tests for Claude detection
+- `tests/test-send-claude-message.sh` - Tests for message sending
+- `tests/test-schedule-with-note.sh` - Tests for scheduling
+- `tests/test-start-claude-agent.sh` - Tests for agent startup
+- `tests/test-integration.sh` - Integration tests for full workflow
+- `tests/mock-claude.sh` - Mock Claude for testing
 
 ## 🤝 Contributing & Optimization
 
@@ -263,6 +352,7 @@ The orchestrator evolves through community discoveries and optimizations. When c
 5. Test improvements across multiple sessions and scenarios
 
 Key areas for enhancement:
+
 - Agent communication patterns
 - Cross-project coordination
 - Novel automation workflows
@@ -273,4 +363,4 @@ MIT License - Use freely but wisely. Remember: with great automation comes great
 
 ---
 
-*"The tools we build today will program themselves tomorrow"* - Alan Kay, 1971
+_"The tools we build today will program themselves tomorrow"_ - Alan Kay, 1971

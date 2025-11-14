@@ -13,6 +13,18 @@ WINDOW="$1"
 shift  # Remove first argument, rest is the message
 MESSAGE="$*"
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Check if Claude is running using the helper script
+if ! "$SCRIPT_DIR/check-claude-running.sh" "$WINDOW" 2>/dev/null; then
+    CURRENT_COMMAND=$(tmux display-message -t "$WINDOW" -p '#{pane_current_command}' 2>/dev/null)
+    echo "ERROR: Claude does not appear to be running in $WINDOW"
+    echo "Current command: $CURRENT_COMMAND"
+    echo "Please start Claude first using: ./start-claude-agent.sh $WINDOW"
+    exit 1
+fi
+
 # Send the message
 tmux send-keys -t "$WINDOW" "$MESSAGE"
 
