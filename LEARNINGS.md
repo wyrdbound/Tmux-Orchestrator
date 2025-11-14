@@ -188,4 +188,29 @@
 
 ```
 
+## 2025-11-13 - PM Role Boundary Violations
+
+### Problem: PM Attempting Implementation Work
+
+**Issue**: PM tried to create project structure directories instead of delegating to Developer
+
+**Violation**: As PM, I attempted to run `mkdir -p src/chord_predictor config data/{raw,processed} logs tests`
+
+**Root Cause**: Eager to help but forgot role boundaries defined in CLAUDE.md
+
+**Correct Approach**:
+- PM responsibility is coordination and quality standards, NOT implementation
+- Developer is responsible for setting up project structure
+- PM should delegate and verify, not implement
+
+**Learning**: PMs must stick to coordination role:
+- ✅ Create and brief subordinate agents
+- ✅ Monitor progress and quality
+- ✅ Report to Orchestrator
+- ❌ Create directories, write code, or implement solutions
+
+**Prevention**: Before taking any action, ask "Is this implementation work?" If yes, delegate to Developer.
+
+**User Correction**: User correctly intervened to prevent role violation and ensure proper documentation.
+
 ```
